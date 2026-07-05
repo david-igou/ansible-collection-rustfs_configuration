@@ -1,6 +1,14 @@
 ---
+# include_role (a task), not a play-level `roles:` entry, so ansible-lint's
+# syntax-check does not try to resolve this collection's own FQCN role at
+# parse time — on a non-canonical CI checkout the collection is not on the
+# roles/collections path, and a static `roles:` entry fails syntax-check.
+# Dynamic include resolves fine at molecule runtime (the collection is
+# installed) and matches how verify.yml invokes the role.
 - name: Converge
   hosts: stubs
   gather_facts: false
-  roles:
-    - david_igou.rustfs_configuration.rustfs_state
+  tasks:
+    - name: Reconcile RustFS state
+      ansible.builtin.include_role:
+        name: david_igou.rustfs_configuration.rustfs_state
