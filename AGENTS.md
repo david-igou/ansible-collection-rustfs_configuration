@@ -25,8 +25,10 @@ server deployment is out of scope by design.
 - Retries only on `network_error`-classified rc failures.
 - Report strings + `set_stats` fact names are stable API (semver-major to
   change).
-- v1 deliberately uses rc's deprecated alias spellings (`rc ls`, `rc ilm`,
-  `rc version`); the canonical-verb migration is a fixture-gated patch.
+- v1 ships the exact verb spellings the live-validated automation used —
+  a deliberate mix: deprecated `rc ls` + `rc ilm rule`, canonical
+  `rc bucket create` + `rc bucket version`. Full-canonical migration is a
+  fixture-gated patch (docs/server-quirks.md).
 
 ## Commands
 
@@ -49,3 +51,17 @@ Hand-edit `CHANGELOG.md`, tag. Semver: major = any break to the
 `rustfs_state_*` namespace, spec schema, report format, or stats names.
 rc pin bumps: version + checksum together (Renovate PR has a manual
 checksum checklist item).
+
+## Design deviations (accepted, recorded)
+
+Relative to the archived v1 design doc:
+
+- `CHANGELOG.md` hand-edited (design D4) but the creator scaffold's
+  antsibull config was dropped rather than never generated.
+- `galaxy.yml` uses `license_file: LICENSE` instead of a `license:` list —
+  equivalent for Galaxy.
+- `extensions/molecule/requirements-test.yml` also pins `containers.podman`
+  (the provisioner needs it; harmless extra pin).
+- Molecule shared literals live in scenario `inventory/group_vars/` rather
+  than `files/vars.yml` — inventory scope is required for the provisioner
+  to render the server container's env at create time.

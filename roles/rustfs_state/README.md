@@ -50,7 +50,9 @@ documented in `meta/argument_specs.yml` and the collection README.
   `rustfs_state_liveness_failures` (also printed as the end-of-role
   summary).
 - The same three lists exported via `set_stats` (per-host) for automation
-  platforms and notification pipelines.
+  platforms and notification pipelines, under the stat names
+  `rustfs_state_changes`, `rustfs_state_unmanaged_on_server` (note: NOT the
+  fact's shorter name), and `rustfs_state_liveness_failures`.
 - With `--diff`, policy/ILM change records carry canonicalized
   desired-vs-current payloads (secrets-free) in the summary.
 

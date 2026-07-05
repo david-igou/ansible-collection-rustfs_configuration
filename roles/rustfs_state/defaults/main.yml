@@ -50,8 +50,11 @@ rustfs_state_fail_on_drift: "{{ ansible_check_mode }}"
 # server-side resources can be escalated from a report to a failure —
 # turning rogue out-of-band resources into a red nightly job.
 rustfs_state_fail_on_unmanaged: false
-# Allowlist of "<kind>:<name>" entries (e.g. "bucket:scratch") excluded
-# from both the unmanaged report and the fail_on_unmanaged gate.
+# Allowlist of report entries (without the hostname prefix) excluded from
+# both the unmanaged report and the fail_on_unmanaged gate. Shapes:
+# "<kind>:<name>" (e.g. "bucket:scratch") and — for out-of-band policy
+# attachments, which rc cannot detach — the exact
+# "user:<name>:extra-attachment:<policy[+policy...]>" entry as reported.
 rustfs_state_ignore_unmanaged: []
 
 # ── REQUIRED, deliberately no default — a run without them must fail ──

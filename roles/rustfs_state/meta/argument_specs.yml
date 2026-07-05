@@ -172,9 +172,13 @@ argument_specs:
         type: bool
         default: false
       rustfs_state_ignore_unmanaged:
-        description: >-
-          Allowlist of C(<kind>:<name>) entries (for example C(bucket:scratch))
-          excluded from the unmanaged report and gate.
+        description:
+          - Allowlist of report entries (without the hostname prefix)
+            excluded from the unmanaged report and gate.
+          - Shapes are C(<kind>:<name>) (for example C(bucket:scratch)) and,
+            for out-of-band policy attachments — which rc cannot detach —
+            the exact C(user:<name>:extra-attachment:<policy[+policy...]>)
+            entry as reported.
         type: list
         elements: str
         default: []

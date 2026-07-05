@@ -15,8 +15,8 @@
         rustfs_state_changes: "{{ rustfs_state_changes + [inventory_hostname ~ ':bucket:' ~ rustfs_state_bucket.name ~ ':create'] }}"
 
     - name: "Make bucket {{ rustfs_state_bucket.name }}"
-      ansible.builtin.command: "{{ rustfs_state_rc }} bucket create {{ rustfs_state_alias }}/{{ rustfs_state_bucket.name }}"
-      environment: "{{ rustfs_state_env }}"
+      ansible.builtin.command: "{{ _rustfs_state_rc }} bucket create {{ rustfs_state_alias }}/{{ rustfs_state_bucket.name }}"
+      environment: "{{ _rustfs_state_env }}"
       register: _rustfs_state_bucket_create
       retries: "{{ rustfs_state_retries }}"
       delay: "{{ rustfs_state_retry_delay }}"
@@ -30,9 +30,9 @@
   block:
     - name: "Read versioning of bucket {{ rustfs_state_bucket.name }}"
       ansible.builtin.command: >-
-        {{ rustfs_state_rc }} bucket version info
+        {{ _rustfs_state_rc }} bucket version info
         {{ rustfs_state_alias }}/{{ rustfs_state_bucket.name }} --json
-      environment: "{{ rustfs_state_env }}"
+      environment: "{{ _rustfs_state_env }}"
       register: _rustfs_state_versioning
       retries: "{{ rustfs_state_retries }}"
       delay: "{{ rustfs_state_retry_delay }}"
@@ -62,10 +62,10 @@
 
         - name: "Set versioning on bucket {{ rustfs_state_bucket.name }}"
           ansible.builtin.command: >-
-            {{ rustfs_state_rc }} bucket version
+            {{ _rustfs_state_rc }} bucket version
             {{ rustfs_state_bucket.versioning | bool | ternary('enable', 'suspend') }}
             {{ rustfs_state_alias }}/{{ rustfs_state_bucket.name }}
-          environment: "{{ rustfs_state_env }}"
+          environment: "{{ _rustfs_state_env }}"
           register: _rustfs_state_versioning_set
           retries: "{{ rustfs_state_retries }}"
           delay: "{{ rustfs_state_retry_delay }}"
@@ -79,9 +79,9 @@
   block:
     - name: "Export lifecycle rules of bucket {{ rustfs_state_bucket.name }}"
       ansible.builtin.command: >-
-        {{ rustfs_state_rc }} ilm rule export
+        {{ _rustfs_state_rc }} ilm rule export
         {{ rustfs_state_alias }}/{{ rustfs_state_bucket.name }}
-      environment: "{{ rustfs_state_env }}"
+      environment: "{{ _rustfs_state_env }}"
       register: _rustfs_state_ilm
       retries: "{{ rustfs_state_retries }}"
       delay: "{{ rustfs_state_retry_delay }}"
@@ -118,16 +118,16 @@
         - name: "Render lifecycle rules for bucket {{ rustfs_state_bucket.name }}"
           ansible.builtin.copy:
             content: "{{ {'rules': rustfs_state_bucket.lifecycle.rules} | to_nice_json }}"
-            dest: "{{ rustfs_state_workdir }}/ilm-{{ rustfs_state_bucket.name }}.json"
+            dest: "{{ _rustfs_state_workdir }}/ilm-{{ rustfs_state_bucket.name }}.json"
             mode: "0600"
           changed_when: false
 
         - name: "Import lifecycle rules to bucket {{ rustfs_state_bucket.name }}"
           ansible.builtin.command: >-
-            {{ rustfs_state_rc }} ilm rule import
+            {{ _rustfs_state_rc }} ilm rule import
             {{ rustfs_state_alias }}/{{ rustfs_state_bucket.name }}
-            {{ rustfs_state_workdir }}/ilm-{{ rustfs_state_bucket.name }}.json
-          environment: "{{ rustfs_state_env }}"
+            {{ _rustfs_state_workdir }}/ilm-{{ rustfs_state_bucket.name }}.json
+          environment: "{{ _rustfs_state_env }}"
           register: _rustfs_state_ilm_import
           retries: "{{ rustfs_state_retries }}"
           delay: "{{ rustfs_state_retry_delay }}"

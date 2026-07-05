@@ -101,7 +101,7 @@ collections:
 
 ## Requirements
 
-- ansible-core >= 2.16 (tested 2.16–2.21)
+- ansible-core >= 2.16 (`meta/runtime.yml` floor; developed and CI-tested on 2.21)
 - Network reach from the controller/EE to each instance endpoint
 - linux-amd64 controller/EE by default — the role downloads a pinned,
   checksum-verified `rc` tarball at runtime. Other arches: set

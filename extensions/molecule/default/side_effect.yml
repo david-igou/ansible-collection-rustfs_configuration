@@ -98,7 +98,6 @@
       environment: "{{ _rc_env }}"
       changed_when: true
 
-    - name: Remove drift workdir
-      ansible.builtin.file:
-        path: "{{ _drift_dir }}"
-        state: absent
+    # The rc install + admin alias are deliberately KEPT: verify.yml reuses
+    # them to inject an out-of-band policy attachment mid-sequence, and
+    # removes the workdir at the end.

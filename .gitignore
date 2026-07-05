@@ -168,3 +168,4 @@ cython_debug/
 
 david_igou-rustfs-*.tar.gz
 tests/output/
+importer_result.json

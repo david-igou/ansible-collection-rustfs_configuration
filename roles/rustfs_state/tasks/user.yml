@@ -38,14 +38,14 @@
     - name: "Add user {{ rustfs_state_user.name }}"
       ansible.builtin.command:
         argv:
-          - "{{ rustfs_state_rc }}"
+          - "{{ _rustfs_state_rc }}"
           - admin
           - user
           - add
           - "{{ rustfs_state_alias }}"
           - "{{ rustfs_state_user.name }}"
           - "{{ rustfs_state_user.secret_key }}"
-      environment: "{{ rustfs_state_env }}"
+      environment: "{{ _rustfs_state_env }}"
       register: _rustfs_state_user_add
       retries: "{{ rustfs_state_retries }}"
       delay: "{{ rustfs_state_retry_delay }}"
@@ -55,11 +55,19 @@
       no_log: true
       changed_when: true
 
+# Server quirk (empirically confirmed on 1.0.0-beta.8): `rc admin policy
+# attach` REPLACES the user's whole policy set with the given list — it is
+# not additive. Attaching only the missing policies would therefore DROP
+# whatever else is attached (and oscillate forever). The role sends the
+# UNION of current + desired: desired policies converge, out-of-band
+# extras survive (deletion safety) and stay visible as extra-attachment
+# reports.
 - name: "Attach missing policies to user {{ rustfs_state_user.name }}"
   vars:
+    _rustfs_state_user_effective_current: "{{ _rustfs_state_user_exists | bool | ternary(_rustfs_state_user_current_policies, []) }}"
     _rustfs_state_user_missing_policies: >-
       {{ (rustfs_state_user.policies | default([]))
-         | difference(_rustfs_state_user_exists | bool | ternary(_rustfs_state_user_current_policies, [])) }}
+         | difference(_rustfs_state_user_effective_current) }}
   when: _rustfs_state_user_missing_policies | length > 0
   block:
     - name: "Record attachment change for user {{ rustfs_state_user.name }}"
@@ -71,10 +79,10 @@
 
     - name: "Attach policies to user {{ rustfs_state_user.name }}"
       ansible.builtin.command: >-
-        {{ rustfs_state_rc }} admin policy attach {{ rustfs_state_alias }}
-        {{ _rustfs_state_user_missing_policies | join(',') }}
+        {{ _rustfs_state_rc }} admin policy attach {{ rustfs_state_alias }}
+        {{ (_rustfs_state_user_effective_current + _rustfs_state_user_missing_policies) | unique | join(',') }}
         --user {{ rustfs_state_user.name }}
-      environment: "{{ rustfs_state_env }}"
+      environment: "{{ _rustfs_state_env }}"
       register: _rustfs_state_user_attach
       retries: "{{ rustfs_state_retries }}"
       delay: "{{ rustfs_state_retry_delay }}"

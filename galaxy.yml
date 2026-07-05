@@ -35,13 +35,24 @@ issues: https://github.com/david-igou/ansible-collection-rustfs/issues
 # and '.git' are always filtered. Mutually exclusive with 'manifest'
 build_ignore:
   - .gitignore
+  - .ansible
   - david_igou-rustfs-*.tar.gz
-  - tests/output
+  - importer_result.json
+  - tests
   - extensions
   - Makefile
+  - ansible.cfg
   - .github
   - .config
-  - ansible.cfg
+  - .isort.cfg
+  - .pre-commit-config.yaml
+  - .prettierignore
+  - pyproject.toml
+  - tox-ansible.ini
+  - requirements.txt
+  - test-requirements.txt
+  - AGENTS.md
+  - renovate.json
 # A dict controlling use of manifest directives used in building the collection artifact. The key 'directives' is a
 # list of MANIFEST.in style
 # L(directives,https://packaging.python.org/en/latest/guides/using-manifest-in/#manifest-in-commands). The key

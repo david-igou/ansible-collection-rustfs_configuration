@@ -17,7 +17,7 @@
 - name: "Register liveness alias for user {{ rustfs_state_user.name }}"
   vars:
     _rustfs_state_live_argv:
-      - "{{ rustfs_state_rc }}"
+      - "{{ _rustfs_state_rc }}"
       - alias
       - set
       - "live-{{ rustfs_state_alias }}-{{ rustfs_state_user.name }}"
@@ -26,7 +26,7 @@
       - "{{ rustfs_state_user.secret_key }}"
   ansible.builtin.command:
     argv: "{{ _rustfs_state_live_argv + (rustfs_state_tls_insecure | bool | ternary(['--insecure'], [])) }}"
-  environment: "{{ rustfs_state_env }}"
+  environment: "{{ _rustfs_state_env }}"
   register: _rustfs_state_live_alias
   retries: "{{ rustfs_state_retries }}"
   delay: "{{ rustfs_state_retry_delay }}"
@@ -40,9 +40,9 @@
 
 - name: "List liveness bucket as user {{ rustfs_state_user.name }}"
   ansible.builtin.command: >-
-    {{ rustfs_state_rc }} ls
+    {{ _rustfs_state_rc }} ls
     live-{{ rustfs_state_alias }}-{{ rustfs_state_user.name }}/{{ rustfs_state_user.liveness_bucket }}
-  environment: "{{ rustfs_state_env }}"
+  environment: "{{ _rustfs_state_env }}"
   register: _rustfs_state_live_ls
   retries: "{{ rustfs_state_retries }}"
   delay: "{{ rustfs_state_retry_delay }}"
@@ -59,4 +59,4 @@
   ansible.builtin.set_fact:
     rustfs_state_liveness_failures: >-
       {{ rustfs_state_liveness_failures
-         + [inventory_hostname ~ ':' ~ rustfs_state_user.name] }}
+         + [inventory_hostname ~ ':user:' ~ rustfs_state_user.name] }}

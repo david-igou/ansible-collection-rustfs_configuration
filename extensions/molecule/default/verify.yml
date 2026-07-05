@@ -9,8 +9,10 @@
 #   3. drift-detection mode reports pending changes, FAILS, mutates nothing;
 #   4. a real converge applies exactly those changes;
 #   5. the versioning suspend branch converges;
-#   6. a spec'd-out resource is REPORTED as unmanaged, never deleted —
-#      then fail_on_unmanaged escalates it and ignore_unmanaged silences it;
+#   6. unmanaged reporting: a spec'd-out bucket AND an out-of-band extra
+#      policy attachment (injected here — rc has no detach, so only the
+#      allowlist can ever silence it) are REPORTED, never deleted/detached;
+#      fail_on_unmanaged escalates both; ignore_unmanaged silences both;
 #   7. dead credentials fail the play (liveness path).
 - name: Verify
   hosts: stubs
@@ -92,6 +94,7 @@
         - name: Assert the failure was the drift assert, with the exact pending set
           ansible.builtin.assert:
             that:
+              - ansible_failed_task.name == 'Fail on drift (drift-detection mode)'
               - rustfs_state_changes | sort == [
                   'rustfs-molecule:bucket:drift-probe:create',
                   'rustfs-molecule:bucket:drift-probe:versioning:enable',
@@ -146,17 +149,49 @@
         fail_msg: "unexpected change set: {{ rustfs_state_changes }}"
 
     # ---- 6. unmanaged reporting: report -> escalate -> silence ----
-    - name: Converge the original spec (probe bucket now unmanaged)
+    # Inject an out-of-band EXTRA attachment with the rc install
+    # side_effect left behind. rc has no detach, so this entry can never
+    # be remediated server-side — the allowlist is the only way out, which
+    # is exactly what this phase proves.
+    - name: Attach an out-of-band builtin policy to app-user
+      ansible.builtin.command: /tmp/molecule-rustfs-drift/rc admin policy attach drift readonly --user app-user
+      environment:
+        XDG_CONFIG_HOME: /tmp/molecule-rustfs-drift/xdg
+      changed_when: true
+
+    # The out-of-band attach REPLACED app-user's set (server quirk), so the
+    # first converge must re-attach app-rw via the union — proving both the
+    # repair and that the extra survives it.
+    - name: Converge the original spec (probe bucket + extra attachment now unmanaged)
       ansible.builtin.include_role:
         name: david_igou.rustfs.rustfs_state
 
-    - name: Assert the probe bucket is reported unmanaged and untouched
+    - name: Assert the wiped attachment was repaired and both extras are reported
+      ansible.builtin.assert:
+        that:
+          - rustfs_state_changes == ['rustfs-molecule:user:app-user:attach:app-rw']
+          - rustfs_state_unmanaged | sort == [
+              'rustfs-molecule:bucket:drift-probe',
+              'rustfs-molecule:user:app-user:extra-attachment:readonly',
+            ] | sort
+        fail_msg: >-
+          unmanaged reporting broken: changes={{ rustfs_state_changes }}
+          unmanaged={{ rustfs_state_unmanaged }}
+
+    - name: Converge again (union attach must be stable)
+      ansible.builtin.include_role:
+        name: david_igou.rustfs.rustfs_state
+
+    - name: Assert the union attach converged with extras intact
       ansible.builtin.assert:
         that:
           - rustfs_state_changes | length == 0
-          - "'rustfs-molecule:bucket:drift-probe' in rustfs_state_unmanaged"
+          - rustfs_state_unmanaged | sort == [
+              'rustfs-molecule:bucket:drift-probe',
+              'rustfs-molecule:user:app-user:extra-attachment:readonly',
+            ] | sort
         fail_msg: >-
-          unmanaged reporting broken: changes={{ rustfs_state_changes }}
+          union attach not stable: changes={{ rustfs_state_changes }}
           unmanaged={{ rustfs_state_unmanaged }}
 
     - name: Escalation gate — fail_on_unmanaged must turn the report into a failure
@@ -171,11 +206,13 @@
           ansible.builtin.fail:
             msg: fail_on_unmanaged passed despite an unmanaged bucket
       rescue:
-        - name: Assert the failure was the unmanaged gate
+        - name: Assert the failure was the unmanaged gate, with both entries
           ansible.builtin.assert:
             that:
+              - ansible_failed_task.name == 'Fail on unmanaged server-side resources (opt-in gate)'
               - "'rustfs-molecule:bucket:drift-probe' in rustfs_state_unmanaged"
-            fail_msg: "role failed for an unexpected reason: {{ ansible_failed_result | default({}) }}"
+              - "'rustfs-molecule:user:app-user:extra-attachment:readonly' in rustfs_state_unmanaged"
+            fail_msg: "role failed for an unexpected reason: {{ ansible_failed_task.name | default('?') }}"
 
     - name: Run role with the probe allowlisted via ignore_unmanaged
       ansible.builtin.include_role:
@@ -184,6 +221,7 @@
         rustfs_state_fail_on_unmanaged: true
         rustfs_state_ignore_unmanaged:
           - bucket:drift-probe
+          - user:app-user:extra-attachment:readonly
 
     - name: Assert the allowlisted probe is silenced
       ansible.builtin.assert:
@@ -221,5 +259,11 @@
         - name: Assert the failure was the liveness assert
           ansible.builtin.assert:
             that:
-              - "'rustfs-molecule:app-user' in rustfs_state_liveness_failures"
-            fail_msg: "role failed for an unexpected reason: {{ ansible_failed_result | default({}) }}"
+              - ansible_failed_task.name == 'Fail on dead credentials (credential store vs server divergence)'
+              - "'rustfs-molecule:user:app-user' in rustfs_state_liveness_failures"
+            fail_msg: "role failed for an unexpected reason: {{ ansible_failed_task.name | default('?') }}"
+
+    - name: Remove the side-effect rc workdir
+      ansible.builtin.file:
+        path: /tmp/molecule-rustfs-drift
+        state: absent
