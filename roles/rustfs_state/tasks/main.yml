@@ -69,6 +69,23 @@
       lifecycle.rules: [] is not allowed (clear-all semantics unverified
       on the server) — omit the lifecycle key to leave rules unmanaged.
 
+# `rc ilm rule import` rejects any rule lacking an `id` (the export always
+# emits one). A hand-written spec that omits it would otherwise fail deep
+# in the import with a generic rc error — assert it up front.
+- name: Assert every managed lifecycle rule carries an id
+  ansible.builtin.assert:
+    that: >-
+      rustfs_state_buckets
+      | selectattr('lifecycle', 'defined')
+      | map(attribute='lifecycle.rules', default=[])
+      | flatten
+      | rejectattr('id', 'defined')
+      | list | length == 0
+    fail_msg: >-
+      every lifecycle rule must carry an id (rc ilm rule import requires
+      it; ids are ignored in drift comparison). Copy rules verbatim from
+      `rc ilm rule export`.
+
 - name: Create working directory (rc binary, alias store, rendered documents)
   ansible.builtin.tempfile:
     state: directory
@@ -114,7 +131,7 @@
 
     # `rc alias set` validates the pair against the endpoint (exit 4 on
     # rejected credentials), so this doubles as admin credential
-    # validation. Retries only network-classified failures.
+    # validation. Retries only rc exit code 3 (NetworkError).
     - name: Register rc alias (validates admin credentials)
       vars:
         _rustfs_state_alias_argv:
@@ -131,9 +148,7 @@
       register: _rustfs_state_alias_result
       retries: "{{ rustfs_state_retries }}"
       delay: "{{ rustfs_state_retry_delay }}"
-      until: >-
-        _rustfs_state_alias_result.rc == 0
-        or 'network_error' not in (_rustfs_state_alias_result.stdout ~ _rustfs_state_alias_result.stderr)
+      until: _rustfs_state_alias_result.rc != 3
       failed_when: false
       no_log: true
       check_mode: false
@@ -163,9 +178,7 @@
       register: _rustfs_state_ls
       retries: "{{ rustfs_state_retries }}"
       delay: "{{ rustfs_state_retry_delay }}"
-      until: >-
-        _rustfs_state_ls.rc == 0
-        or 'network_error' not in (_rustfs_state_ls.stdout ~ _rustfs_state_ls.stderr)
+      until: _rustfs_state_ls.rc != 3
       check_mode: false
       changed_when: false
 
@@ -175,9 +188,7 @@
       register: _rustfs_state_policy_ls
       retries: "{{ rustfs_state_retries }}"
       delay: "{{ rustfs_state_retry_delay }}"
-      until: >-
-        _rustfs_state_policy_ls.rc == 0
-        or 'network_error' not in (_rustfs_state_policy_ls.stdout ~ _rustfs_state_policy_ls.stderr)
+      until: _rustfs_state_policy_ls.rc != 3
       check_mode: false
       changed_when: false
 
@@ -187,9 +198,7 @@
       register: _rustfs_state_user_ls
       retries: "{{ rustfs_state_retries }}"
       delay: "{{ rustfs_state_retry_delay }}"
-      until: >-
-        _rustfs_state_user_ls.rc == 0
-        or 'network_error' not in (_rustfs_state_user_ls.stdout ~ _rustfs_state_user_ls.stderr)
+      until: _rustfs_state_user_ls.rc != 3
       check_mode: false
       changed_when: false
 

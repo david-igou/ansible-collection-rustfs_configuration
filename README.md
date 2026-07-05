@@ -104,9 +104,14 @@ collections:
 - ansible-core >= 2.16 (`meta/runtime.yml` floor; developed and CI-tested on 2.21)
 - Network reach from the controller/EE to each instance endpoint
 - linux-amd64 controller/EE by default — the role downloads a pinned,
-  checksum-verified `rc` tarball at runtime. Other arches: set
-  `rustfs_state_rc_arch` (+ matching checksum), or bake rc into your EE and
-  set `rustfs_state_rc_binary`.
+  checksum-verified `rc` tarball (the static musl build) at runtime. Other
+  arches: set `rustfs_state_rc_arch` (+ matching checksum).
+- **Recommended for production/AAP: bake `rc` into your execution
+  environment** and set `rustfs_state_rc_binary` to its path. Runtime
+  download adds a GitHub dependency (and rate-limit exposure) to every run;
+  a baked binary removes it and makes the version fully reproducible with
+  the EE image. Bake from the release tarball or the `rustfs/rc` container
+  image (pin it by digest — its tags are mutable).
 
 ## Development
 

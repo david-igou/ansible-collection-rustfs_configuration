@@ -17,12 +17,31 @@ or rc pin bump (run your drift job right after any live server upgrade).
 | `rc admin policy attach` REPLACES the user's whole policy set (not additive — attaching B to a user holding A leaves only B) | The role attaches the UNION of current + desired, so extras survive and desired policies converge instead of oscillating |
 | No `rc admin policy detach` subcommand exists in 0.1.x | Extra attachments are reported, never removed by the role; an operator CAN remediate manually by replace-attaching the desired-only set, or allowlist via `rustfs_state_ignore_unmanaged` |
 | `rc admin user add` on an existing access key rotates the secret in place (attachments survive) | The role NEVER re-adds an existing user; rotation is a manual act |
-| `rc alias set` validates credentials against the endpoint (exit 4 on rejection) | Doubles as admin credential validation; liveness catches dead keys at alias registration |
-| Admin API (`/rustfs/admin/v3/*`) refuses connections in bursts while the S3 data path stays healthy (observed on live instances) | Every rc call retries, but only on `details.type == "network_error"` in the rc error envelope |
-| The rc error envelope marks quota-rejection `retryable: true` | Retry classification keys on `network_error`, NOT on `retryable` |
+| `rc alias set` connects to the endpoint and validates credentials — exit 0 (ok), exit 4 (bad access/secret key), exit 3 (endpoint unreachable) — verified live | Doubles as admin credential validation; the exit-4 fast-fail is sound and liveness catches dead keys at alias registration |
+| Admin API (`/rustfs/admin/v3/*`) refuses connections in bursts while the S3 data path stays healthy (observed on live instances) | Every rc call retries, keyed on **exit code 3** (NetworkError) — the sole retryable code |
 | `rc bucket remove --force` is unimplemented client-side (exit 6); versioned buckets are undeletable | Deletion safety is absolute: nothing is ever deleted |
 | rc release tarball v0.1.25 contains a binary self-reporting 0.1.24 (same surface) | Cosmetic; pin is by tarball version + checksum |
 | rc `config.toml` (XDG config) stores alias secrets in plaintext | The role isolates `XDG_CONFIG_HOME` into a run tempdir and shreds it in `always:` |
+
+## Retry contract (why the role keys on exit code 3)
+
+rc ships a stable exit-code taxonomy (`crates/cli/src/exit_code.rs`): `0`
+Success, `1` GeneralError, `2` UsageError, **`3` NetworkError (the only code
+rc documents as retryable)**, `4` AuthError, `5` NotFound, `6` Conflict, `7`
+UnsupportedFeature, `130` Interrupted. Exit codes are emitted identically in
+human and `--json` mode, so the role retries **only on exit code 3** and
+treats every other non-zero as permanent (fail fast).
+
+Do **not** revert to matching the `network_error` string: that token exists
+*only* inside rc's `--json` error envelope (`crates/cli/src/output/formatter.rs`
+maps `NetworkError -> ("network_error", true)`; also surfaced as
+`details.type` / `details.retryable`). The role's mutation and `alias set`
+calls run without `--json`, whose human error line is `Network error: {msg}`
+(capital N, space, no underscore) — so a substring test silently never
+matched on the write path, and those calls effectively never retried.
+Verified live against `1.0.0-beta.8`: an unreachable/transient endpoint
+returns exit 3; connection-refused/reset map to exit 5; bad credentials to
+exit 4.
 
 ## Known unknowns (re-verify on every pin bump)
 

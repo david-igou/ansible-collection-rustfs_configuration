@@ -30,9 +30,7 @@
   register: _rustfs_state_live_alias
   retries: "{{ rustfs_state_retries }}"
   delay: "{{ rustfs_state_retry_delay }}"
-  until: >-
-    _rustfs_state_live_alias.rc == 0
-    or 'network_error' not in (_rustfs_state_live_alias.stdout ~ _rustfs_state_live_alias.stderr)
+  until: _rustfs_state_live_alias.rc != 3
   failed_when: false
   no_log: true
   check_mode: false
@@ -46,9 +44,7 @@
   register: _rustfs_state_live_ls
   retries: "{{ rustfs_state_retries }}"
   delay: "{{ rustfs_state_retry_delay }}"
-  until: >-
-    _rustfs_state_live_ls.rc == 0
-    or 'network_error' not in (_rustfs_state_live_ls.stdout ~ _rustfs_state_live_ls.stderr)
+  until: _rustfs_state_live_ls.rc != 3
   failed_when: false
   check_mode: false
   changed_when: false

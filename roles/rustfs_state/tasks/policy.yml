@@ -1,10 +1,9 @@
 ---
 # Reconcile one IAM policy (loop_var: rustfs_state_policy).
 #
-# Retries only network-class failures ("not found" must fall through so a
-# missing policy is detected instead of retried to exhaustion): the rc
-# error JSON carries details.type == "network_error" for the retryable
-# class.
+# Retries only rc exit code 3 (NetworkError). "not found" (exit 5) falls
+# through immediately, so a missing policy is detected rather than retried
+# to exhaustion.
 
 - name: "Read current document for policy {{ rustfs_state_policy.name }}"
   ansible.builtin.command: >-
@@ -14,9 +13,7 @@
   register: _rustfs_state_policy_info
   retries: "{{ rustfs_state_retries }}"
   delay: "{{ rustfs_state_retry_delay }}"
-  until: >-
-    _rustfs_state_policy_info.rc == 0
-    or 'network_error' not in (_rustfs_state_policy_info.stdout ~ _rustfs_state_policy_info.stderr)
+  until: _rustfs_state_policy_info.rc != 3
   failed_when: false
   check_mode: false
   changed_when: false
@@ -63,7 +60,5 @@
       register: _rustfs_state_policy_apply
       retries: "{{ rustfs_state_retries }}"
       delay: "{{ rustfs_state_retry_delay }}"
-      until: >-
-        _rustfs_state_policy_apply.rc == 0
-        or 'network_error' not in (_rustfs_state_policy_apply.stdout ~ _rustfs_state_policy_apply.stderr)
+      until: _rustfs_state_policy_apply.rc != 3
       changed_when: true

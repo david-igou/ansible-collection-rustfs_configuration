@@ -20,9 +20,7 @@
       register: _rustfs_state_bucket_create
       retries: "{{ rustfs_state_retries }}"
       delay: "{{ rustfs_state_retry_delay }}"
-      until: >-
-        _rustfs_state_bucket_create.rc == 0
-        or 'network_error' not in (_rustfs_state_bucket_create.stdout ~ _rustfs_state_bucket_create.stderr)
+      until: _rustfs_state_bucket_create.rc != 3
       changed_when: true
 
 - name: "Manage versioning for bucket {{ rustfs_state_bucket.name }}"
@@ -36,9 +34,7 @@
       register: _rustfs_state_versioning
       retries: "{{ rustfs_state_retries }}"
       delay: "{{ rustfs_state_retry_delay }}"
-      until: >-
-        _rustfs_state_versioning.rc == 0
-        or 'network_error' not in (_rustfs_state_versioning.stdout ~ _rustfs_state_versioning.stderr)
+      until: _rustfs_state_versioning.rc != 3
       failed_when: false
       check_mode: false
       changed_when: false
@@ -69,9 +65,7 @@
           register: _rustfs_state_versioning_set
           retries: "{{ rustfs_state_retries }}"
           delay: "{{ rustfs_state_retry_delay }}"
-          until: >-
-            _rustfs_state_versioning_set.rc == 0
-            or 'network_error' not in (_rustfs_state_versioning_set.stdout ~ _rustfs_state_versioning_set.stderr)
+          until: _rustfs_state_versioning_set.rc != 3
           changed_when: true
 
 - name: "Manage lifecycle for bucket {{ rustfs_state_bucket.name }}"
@@ -85,9 +79,7 @@
       register: _rustfs_state_ilm
       retries: "{{ rustfs_state_retries }}"
       delay: "{{ rustfs_state_retry_delay }}"
-      until: >-
-        _rustfs_state_ilm.rc == 0
-        or 'network_error' not in (_rustfs_state_ilm.stdout ~ _rustfs_state_ilm.stderr)
+      until: _rustfs_state_ilm.rc != 3
       failed_when: false
       check_mode: false
       changed_when: false
@@ -131,7 +123,5 @@
           register: _rustfs_state_ilm_import
           retries: "{{ rustfs_state_retries }}"
           delay: "{{ rustfs_state_retry_delay }}"
-          until: >-
-            _rustfs_state_ilm_import.rc == 0
-            or 'network_error' not in (_rustfs_state_ilm_import.stdout ~ _rustfs_state_ilm_import.stderr)
+          until: _rustfs_state_ilm_import.rc != 3
           changed_when: true

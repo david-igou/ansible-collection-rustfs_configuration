@@ -18,9 +18,12 @@ rustfs_state_rc_binary: ""
 
 # The RustFS admin API (/rustfs/admin/v3/*) intermittently refuses requests
 # in bursts on 1.0.0-beta.8 while the S3 data path stays healthy, so every
-# rc call retries — but ONLY on classified network errors (the rc error
-# envelope reports details.type == "network_error"); permanent errors fail
-# immediately.
+# rc call retries — but ONLY on rc exit code 3 (NetworkError), the sole
+# code rc marks retryable (crates/cli/src/exit_code.rs). Every other exit
+# code (auth/usage/not-found/conflict/unsupported) is permanent and fails
+# immediately. Exit codes are emitted identically in human and --json
+# mode, so this classifies uniformly across every rc call (verified live:
+# an unreachable/transient endpoint returns 3, bad credentials 4).
 rustfs_state_retries: 8
 rustfs_state_retry_delay: 3
 

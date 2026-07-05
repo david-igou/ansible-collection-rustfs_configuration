@@ -49,9 +49,7 @@
       register: _rustfs_state_user_add
       retries: "{{ rustfs_state_retries }}"
       delay: "{{ rustfs_state_retry_delay }}"
-      until: >-
-        _rustfs_state_user_add.rc == 0
-        or 'network_error' not in (_rustfs_state_user_add.stdout ~ _rustfs_state_user_add.stderr)
+      until: _rustfs_state_user_add.rc != 3
       no_log: true
       changed_when: true
 
@@ -86,9 +84,7 @@
       register: _rustfs_state_user_attach
       retries: "{{ rustfs_state_retries }}"
       delay: "{{ rustfs_state_retry_delay }}"
-      until: >-
-        _rustfs_state_user_attach.rc == 0
-        or 'network_error' not in (_rustfs_state_user_attach.stdout ~ _rustfs_state_user_attach.stderr)
+      until: _rustfs_state_user_attach.rc != 3
       changed_when: true
 
 # Policies attached on the server but absent from the spec are reported,
