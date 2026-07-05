@@ -1,4 +1,18 @@
 ---
 profile: production
+
+# ansible-lint syntax-checks each molecule playbook. create.yml and
+# destroy.yml are one-line `import_playbook:
+# david_igou.molecule_provisioners.<create|destroy>` shims for the external
+# provisioner collection, which is a molecule-only test dependency
+# (extensions/molecule/requirements-test.yml) and is not part of the lint
+# install set — so lint cannot resolve the import and errors. They contain
+# nothing else to lint; exclude them. offline: true keeps lint from
+# attempting to fetch collections at run time (matches the other
+# david_igou collections).
+offline: true
+
 exclude_paths:
   - .github/
+  - extensions/molecule/default/create.yml
+  - extensions/molecule/default/destroy.yml
