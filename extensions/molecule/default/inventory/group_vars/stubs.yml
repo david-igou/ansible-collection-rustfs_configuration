@@ -1,0 +1,65 @@
+---
+# Desired state for the stub host (the instance under test), in the role's
+# flat per-host shape — the same layout production host_vars use.
+rustfs_state_endpoint: http://127.0.0.1:9100
+rustfs_state_admin_access_key: "{{ rustfs_molecule_admin_access_key }}"
+rustfs_state_admin_secret_key: "{{ rustfs_molecule_admin_secret_key }}"
+
+rustfs_state_policies:
+  - name: app-rw
+    document:
+      ID: ""
+      Version: "2012-10-17"
+      Statement:
+        - Sid: ListAndDescribeBucket
+          Effect: Allow
+          Condition: {}
+          Action:
+            - s3:ListBucket
+            - s3:GetBucketLocation
+            - s3:ListBucketMultipartUploads
+          Resource:
+            - arn:aws:s3:::app-data
+        - Sid: ReadWriteDeleteObjects
+          Effect: Allow
+          Condition: {}
+          Action:
+            - s3:GetObject
+            - s3:PutObject
+            - s3:DeleteObject
+            - s3:AbortMultipartUpload
+            - s3:ListMultipartUploadParts
+          Resource:
+            - arn:aws:s3:::app-data/*
+
+# Named base so verify.yml can compose spec variants without recursive
+# self-reference.
+rustfs_molecule_buckets_base:
+  - name: app-data
+    versioning: false
+  - name: app-backups
+    versioning: true
+    lifecycle:
+      # import requires an id on every rule; comparison ignores id churn.
+      rules:
+        - id: 11111111-1111-1111-1111-111111111111
+          status: Enabled
+          prefix: backups/
+          tags:
+            tier: daily
+          noncurrentVersionExpiration:
+            noncurrentDays: 14
+        - id: 22222222-2222-2222-2222-222222222222
+          status: Enabled
+          prefix: backups/
+          noncurrentVersionExpiration:
+            noncurrentDays: 90
+
+rustfs_state_buckets: "{{ rustfs_molecule_buckets_base }}"
+
+rustfs_state_users:
+  - name: app-user
+    policies:
+      - app-rw
+    secret_key: "{{ rustfs_molecule_user_secret_key }}"
+    liveness_bucket: app-data

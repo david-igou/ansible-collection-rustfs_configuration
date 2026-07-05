@@ -1,0 +1,13 @@
+---
+- name: Prepare — wait for the RustFS server to serve S3
+  hosts: stubs
+  gather_facts: false
+  tasks:
+    - name: Wait for the S3 endpoint
+      ansible.builtin.uri:
+        url: "{{ rustfs_state_endpoint }}"
+        status_code: [200, 403]
+      register: _rustfs_molecule_up
+      retries: 30
+      delay: 2
+      until: _rustfs_molecule_up is not failed

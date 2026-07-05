@@ -1,0 +1,30 @@
+---
+DOCUMENTATION:
+  name: rustfs_canonical_ilm
+  version_added: 1.0.0
+  short_description: Canonicalize a RustFS ILM rule list for comparison
+  description:
+    - Strips server-generated rule ids (lowercase C(id) — the only casing rc
+      0.1.x emits) and orders rules deterministically.
+    - C(rc ilm rule import) requires an id on every rule while the server may
+      regenerate them; stripping ids on both sides of a comparison prevents
+      false drift either way.
+  positional: _input
+  options:
+    _input:
+      description: ILM rule list, as exported by C(rc ilm rule export).
+      type: list
+      elements: dict
+      required: true
+
+EXAMPLES: |
+  - name: Compare live lifecycle rules against the spec
+    ansible.builtin.set_fact:
+      matches: >-
+        {{ (live_rules | david_igou.rustfs.rustfs_canonical_ilm)
+           == (spec_rules | david_igou.rustfs.rustfs_canonical_ilm) }}
+
+RETURN:
+  _value:
+    description: The canonicalized rule list.
+    type: list

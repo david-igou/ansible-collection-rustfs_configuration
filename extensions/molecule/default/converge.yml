@@ -1,0 +1,6 @@
+---
+- name: Converge
+  hosts: stubs
+  gather_facts: false
+  roles:
+    - david_igou.rustfs.rustfs_state

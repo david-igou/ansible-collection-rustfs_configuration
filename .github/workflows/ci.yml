@@ -1,0 +1,35 @@
+---
+name: CI
+
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+on: # yamllint disable-line rule:truthy
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    uses: ansible/ansible-content-actions/.github/workflows/ansible_lint.yaml@main
+  sanity:
+    uses: ansible/ansible-content-actions/.github/workflows/sanity.yaml@main
+  units:
+    uses: ansible/ansible-content-actions/.github/workflows/unit.yaml@main
+  molecule:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout into the canonical collection path
+        uses: actions/checkout@v4
+        with:
+          path: ansible_collections/david_igou/rustfs
+
+      - name: Install test requirements
+        run: pip install "molecule>=25" ansible-core ansible-lint
+
+      - name: Run molecule (podman backend)
+        working-directory: ansible_collections/david_igou/rustfs
+        run: make test

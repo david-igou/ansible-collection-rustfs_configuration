@@ -1,0 +1,30 @@
+---
+DOCUMENTATION:
+  name: rustfs_canonical_policy
+  version_added: 1.0.0
+  short_description: Canonicalize a RustFS IAM policy document for comparison
+  description:
+    - Sorts C(Action)/C(Resource) lists inside each statement, drops the empty
+      C(Condition) and C(ID) fields the server adds, and orders statements
+      deterministically.
+    - RustFS returns policy arrays in a different order on every call (they
+      are stored as sets); passing both sides of a comparison through this
+      filter prevents false drift.
+  positional: _input
+  options:
+    _input:
+      description: IAM policy document.
+      type: dict
+      required: true
+
+EXAMPLES: |
+  - name: Compare a live policy against the spec
+    ansible.builtin.set_fact:
+      matches: >-
+        {{ (live_doc | david_igou.rustfs.rustfs_canonical_policy)
+           == (spec_doc | david_igou.rustfs.rustfs_canonical_policy) }}
+
+RETURN:
+  _value:
+    description: The canonicalized policy document.
+    type: dict

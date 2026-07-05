@@ -1,0 +1,16 @@
+---
+galaxy_info:
+  role_name: rustfs_state
+  author: david-igou
+  description: >-
+    Declarative in-server state for one RustFS instance via the pinned rc
+    CLI — IAM policies, buckets, versioning, lifecycle rules, users,
+    policy attachments, credential liveness — with check mode as drift
+    detection. Pure over its inputs: no secret lookups inside the role.
+  license: GPL-3.0-or-later
+  min_ansible_version: "2.16"
+  galaxy_tags:
+    - rustfs
+    - s3
+    - storage
+dependencies: []

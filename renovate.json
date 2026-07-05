@@ -1,0 +1,38 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "automerge": false,
+  "packageRules": [
+    {
+      "matchPackageNames": ["rustfs/cli", "rustfs/rustfs"],
+      "prBodyNotes": [
+        "**Manual step:** update the sha256 checksum(s) next to the bumped version — `rustfs_state_rc_checksum` in `roles/rustfs_state/defaults/main.yml` and `rustfs_molecule_rc_checksum` in `extensions/molecule/default/inventory/group_vars/all.yml`. A stale checksum fails safe as a red download in molecule."
+      ]
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^roles/rustfs_state/defaults/main\\.yml$/",
+        "/^extensions/molecule/default/inventory/group_vars/all\\.yml$/"
+      ],
+      "matchStrings": [
+        "rustfs_(?:state|molecule)_rc_version: \"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "rustfs/cli",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^extensions/molecule/default/inventory/hosts\\.yml$/"
+      ],
+      "matchStrings": [
+        "image: (?<depName>docker\\.io/rustfs/rustfs):(?<currentValue>[^\\s]+)"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ]
+}

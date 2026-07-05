@@ -1,0 +1,15 @@
+---
+# Scenario-wide literals. Credentials are literal strings by design: the
+# role takes resolved credentials by contract, so molecule exercises the
+# same code path as production.
+rustfs_molecule_admin_access_key: molecule-admin
+rustfs_molecule_admin_secret_key: molecule-admin-secret-key
+rustfs_molecule_user_secret_key: molecule-user-secret-key
+
+# rc pin for side_effect's private install (drift injection behind the
+# role's back). Mirrors the role defaults; both are Renovate-tracked.
+rustfs_molecule_rc_version: "0.1.25"
+rustfs_molecule_rc_checksum: "sha256:a2d359f9c1c934886e236eb264318bbab326cb67cfae718e3a5186c8cfae82fe"
+rustfs_molecule_rc_url: >-
+  https://github.com/rustfs/cli/releases/download/v{{ rustfs_molecule_rc_version
+  }}/rustfs-cli-linux-amd64-v{{ rustfs_molecule_rc_version }}.tar.gz

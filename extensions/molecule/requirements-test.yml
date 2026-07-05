@@ -1,0 +1,10 @@
+---
+# Pinned test-time collection dependencies, shared by every molecule
+# scenario. Wired in once via extensions/molecule/config.yml (which
+# molecule auto-merges only when invoked from the collection root — use
+# `make test`).
+collections:
+  - name: david_igou.molecule_provisioners
+    version: 0.0.4-alpha
+  - name: containers.podman
+    version: ">=1.16.0"

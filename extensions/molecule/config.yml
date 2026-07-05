@@ -1,0 +1,9 @@
+---
+# Shared molecule config, auto-merged into EVERY scenario's molecule.yml.
+# Molecule only auto-discovers this file when molecule is invoked from the
+# COLLECTION ROOT with MOLECULE_GLOB set (see Makefile).
+dependency:
+  name: galaxy
+  enabled: true
+  options:
+    requirements-file: extensions/molecule/requirements-test.yml
