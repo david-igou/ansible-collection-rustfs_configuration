@@ -1,4 +1,4 @@
-# david_igou.rustfs — agent notes
+# david_igou.rustfs_configuration — agent notes
 
 Ansible collection: declarative in-server state for RustFS via the official
 `rc` CLI. Scope is Layer 1 only (buckets, versioning, ILM, IAM, liveness);
@@ -33,7 +33,7 @@ server deployment is out of scope by design.
 ## Commands
 
 - Build: `ansible-galaxy collection build`
-- Units: `ansible-test units --venv` (from an `ansible_collections/david_igou/rustfs` checkout)
+- Units: `ansible-test units --venv` (from an `ansible_collections/david_igou/rustfs_configuration` checkout)
 - Sanity: `ansible-test sanity --venv`
 - Lint: `ansible-lint`
 - E2E: `make test` (podman required; MUST run from the collection root)

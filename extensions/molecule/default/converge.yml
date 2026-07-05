@@ -3,4 +3,4 @@
   hosts: stubs
   gather_facts: false
   roles:
-    - david_igou.rustfs.rustfs_state
+    - david_igou.rustfs_configuration.rustfs_state

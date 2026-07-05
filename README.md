@@ -1,4 +1,4 @@
-# david_igou.rustfs
+# david_igou.rustfs_configuration
 
 Declarative in-server state management for [RustFS](https://rustfs.com)
 object-storage servers, driven by the official
@@ -15,9 +15,9 @@ deployment and runtime configuration are deliberately out of scope.
 
 | Content | Purpose |
 |---|---|
-| role `david_igou.rustfs.rustfs_state` | Reconcile ONE instance's state against a declarative per-host spec |
-| filter `david_igou.rustfs.rustfs_canonical_policy` | Canonical IAM-policy comparison (server ordering is unstable) |
-| filter `david_igou.rustfs.rustfs_canonical_ilm` | Canonical ILM-rule comparison (ids server-generated but required on import) |
+| role `david_igou.rustfs_configuration.rustfs_state` | Reconcile ONE instance's state against a declarative per-host spec |
+| filter `david_igou.rustfs_configuration.rustfs_canonical_policy` | Canonical IAM-policy comparison (server ordering is unstable) |
+| filter `david_igou.rustfs_configuration.rustfs_canonical_ilm` | Canonical ILM-rule comparison (ids server-generated but required on import) |
 
 ## Design invariants
 
@@ -77,7 +77,7 @@ rustfs_state_users:
   hosts: rustfs_servers
   gather_facts: false
   roles:
-    - david_igou.rustfs.rustfs_state
+    - david_igou.rustfs_configuration.rustfs_state
 ```
 
 - Converge: `ansible-playbook site.yml`
@@ -94,7 +94,7 @@ Consume as a git source until a Galaxy release exists:
 ```yaml
 # requirements.yml
 collections:
-  - name: https://github.com/david-igou/ansible-collection-rustfs.git
+  - name: https://github.com/david-igou/ansible-collection-rustfs_configuration.git
     type: git
     version: v1.0.0
 ```
@@ -114,8 +114,8 @@ Molecule needs the repo checked out at a collection path and run from the
 collection root (so `extensions/molecule/config.yml` engages):
 
 ```console
-git clone <repo> ansible_collections/david_igou/rustfs
-cd ansible_collections/david_igou/rustfs
+git clone <repo> ansible_collections/david_igou/rustfs_configuration
+cd ansible_collections/david_igou/rustfs_configuration
 make test        # full molecule suite (podman required)
 ```
 

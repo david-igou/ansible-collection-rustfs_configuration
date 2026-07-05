@@ -26,9 +26,9 @@
     _rustfs_state_policy_exists: "{{ rustfs_state_policy.name in _rustfs_state_current_policies }}"
     _rustfs_state_policy_current: >-
       {{ ((_rustfs_state_policy_info.stdout | from_json).policy.policy
-          | david_igou.rustfs.rustfs_canonical_policy)
+          | david_igou.rustfs_configuration.rustfs_canonical_policy)
          if _rustfs_state_policy_info.rc == 0 else none }}
-    _rustfs_state_policy_desired: "{{ rustfs_state_policy.document | david_igou.rustfs.rustfs_canonical_policy }}"
+    _rustfs_state_policy_desired: "{{ rustfs_state_policy.document | david_igou.rustfs_configuration.rustfs_canonical_policy }}"
 
 - name: "Apply policy {{ rustfs_state_policy.name }}"
   when: _rustfs_state_policy_current != _rustfs_state_policy_desired

@@ -21,8 +21,8 @@ EXAMPLES: |
   - name: Compare live lifecycle rules against the spec
     ansible.builtin.set_fact:
       matches: >-
-        {{ (live_rules | david_igou.rustfs.rustfs_canonical_ilm)
-           == (spec_rules | david_igou.rustfs.rustfs_canonical_ilm) }}
+        {{ (live_rules | david_igou.rustfs_configuration.rustfs_canonical_ilm)
+           == (spec_rules | david_igou.rustfs_configuration.rustfs_canonical_ilm) }}
 
 RETURN:
   _value:

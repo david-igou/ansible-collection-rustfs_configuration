@@ -99,9 +99,9 @@
       ansible.builtin.set_fact:
         _rustfs_state_ilm_current: >-
           {{ (((_rustfs_state_ilm.stdout | from_json).rules | default([]))
-              | david_igou.rustfs.rustfs_canonical_ilm)
+              | david_igou.rustfs_configuration.rustfs_canonical_ilm)
              if _rustfs_state_ilm.rc == 0 else [] }}
-        _rustfs_state_ilm_desired: "{{ rustfs_state_bucket.lifecycle.rules | david_igou.rustfs.rustfs_canonical_ilm }}"
+        _rustfs_state_ilm_desired: "{{ rustfs_state_bucket.lifecycle.rules | david_igou.rustfs_configuration.rustfs_canonical_ilm }}"
 
     - name: "Converge lifecycle for bucket {{ rustfs_state_bucket.name }}"
       when: _rustfs_state_ilm_current != _rustfs_state_ilm_desired

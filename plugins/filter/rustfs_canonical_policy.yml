@@ -21,8 +21,8 @@ EXAMPLES: |
   - name: Compare a live policy against the spec
     ansible.builtin.set_fact:
       matches: >-
-        {{ (live_doc | david_igou.rustfs.rustfs_canonical_policy)
-           == (spec_doc | david_igou.rustfs.rustfs_canonical_policy) }}
+        {{ (live_doc | david_igou.rustfs_configuration.rustfs_canonical_policy)
+           == (spec_doc | david_igou.rustfs_configuration.rustfs_canonical_policy) }}
 
 RETURN:
   _value:

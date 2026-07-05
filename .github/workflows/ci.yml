@@ -25,11 +25,11 @@ jobs:
       - name: Checkout into the canonical collection path
         uses: actions/checkout@v4
         with:
-          path: ansible_collections/david_igou/rustfs
+          path: ansible_collections/david_igou/rustfs_configuration
 
       - name: Install test requirements
         run: pip install "molecule>=25" ansible-core ansible-lint
 
       - name: Run molecule (podman backend)
-        working-directory: ansible_collections/david_igou/rustfs
+        working-directory: ansible_collections/david_igou/rustfs_configuration
         run: make test
