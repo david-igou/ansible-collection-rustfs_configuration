@@ -46,6 +46,30 @@ Documentation: the README Quickstart now shows a complete worked example
 now includes a troubleshooting hint; and `docs/server-quirks.md` records the
 policy-boilerplate and ILM-scoping server behaviours above.
 
+Documentation, from a second round of usability testing (four testers each
+building the full lab S3 estate — registry, Postgres/Barman backups, RouterOS,
+Velero/OADP, AAP, Loki — with least-privilege service accounts):
+
+- Lifecycle: both whole-bucket retention shapes are now shown side by side and
+  correctly labelled — `expiration: {days: N}` (expire CURRENT objects, the
+  non-versioned logs/backups case, verified to round-trip) and
+  `noncurrentVersionExpiration: {noncurrentDays: N}` (expire OLD versions). The
+  earlier example was mislabelled a generic "expiration rule" while showing
+  only the noncurrent shape; all four testers had to guess the current-object
+  key. Anchored by a new filter unit test.
+- README gained a "Managing an estate" section: a verified DRY recipe that
+  expands a compact bucket list into scoped `<bucket>-rw` policies (the biggest
+  ergonomics tax at estate scale), plus notes that liveness proves
+  authentication only (verify authorization scope out-of-band with `rc`) and
+  that `ANSIBLE_STDOUT_CALLBACK=yaml` keeps output readable across many
+  resources.
+- Clarified: `access_key` defaults to `name` (set only on mismatch); `--diff`
+  covers policy/ILM payloads while versioning drift surfaces in `changes`; the
+  union-attach guarantee is stated as one quotable invariant; and an S3
+  data-path `AccessDenied` returns rc exit 3 (retryable), not exit 4 — so an
+  under-privileged live credential is retried and reported as a liveness
+  failure (server-quirks.md).
+
 Retry classification was corrected after reviewing the collection against
 the `rustfs/cli` source: the earlier `network_error`-substring predicate
 only matched in `--json` output, so it never fired on the write path or

@@ -80,22 +80,35 @@ rustfs_state_policies:
             - arn:aws:s3:::backups/*
 
 rustfs_state_buckets:
+  # A versioned bucket: keep the live object, prune OLD VERSIONS after 30 days.
+  # Every rule MUST carry an `id` (ids are ignored in drift comparison). To
+  # scope a rule to a path use a top-level `prefix: "sub/"` — NOT a nested
+  # `filter:` (the server honours only top-level prefix).
   - name: backups
     versioning: true
-    # Expire old noncurrent versions after 30 days. The rule is a whole-bucket
-    # rule (no prefix). Every rule MUST carry an `id`; ids are ignored in drift
-    # comparison. To scope a rule to a path use a top-level `prefix: "sub/"` —
-    # NOT a nested `filter:` (the server honours only top-level prefix).
     lifecycle:
       rules:
-        - id: expire-old-versions
+        - id: expire-noncurrent-30d
           status: Enabled
           noncurrentVersionExpiration:
             noncurrentDays: 30
+  # A non-versioned bucket: expire CURRENT OBJECTS 14 days after creation
+  # (the shape a logs / cluster-backup bucket needs — note `expiration.days`,
+  # distinct from the `noncurrentVersionExpiration` above).
+  - name: logs
+    versioning: false
+    lifecycle:
+      rules:
+        - id: expire-objects-14d
+          status: Enabled
+          expiration:
+            days: 14
 
 rustfs_state_users:
   - name: backup-writer
     policies: [app-rw]
+    # access_key defaults to `name`; set it only when the stored access key
+    # differs from the user name (a mismatch is what liveness catches).
     access_key: "{{ lookup('community.general.onepassword', 'backup-writer', field='username', vault='infra') }}"
     secret_key: "{{ lookup('community.general.onepassword', 'backup-writer', field='password', vault='infra') }}"
     liveness_bucket: backups
@@ -119,6 +132,43 @@ rustfs_state_users:
 
 Full interface: [`roles/rustfs_state/README.md`](roles/rustfs_state/README.md)
 and `meta/argument_specs.yml` (validated at role start).
+
+## Managing an estate
+
+Real deployments have many buckets, each with a service account holding a
+read-write policy scoped to just that bucket. The spec is plain data, so you
+can generate the repetitive per-bucket policies from a compact list instead of
+hand-writing N near-identical blocks. This expands one bucket name into a full
+`<bucket>-rw` policy scoped to that bucket (verified to produce the documented
+list-of-dicts shape):
+
+```yaml
+# host_vars — one line per bucket
+_rw_buckets: [quay, cnpg-backups, velero, loki-chunks]
+
+rustfs_state_policies: >-
+  {{ _rw_buckets | map('regex_replace', '^(.*)$',
+       '{"name": "\1-rw", "document": {"Version": "2012-10-17", "Statement":
+        [{"Effect": "Allow",
+          "Action": ["s3:GetObject","s3:PutObject","s3:DeleteObject","s3:ListBucket"],
+          "Resource": ["arn:aws:s3:::\1","arn:aws:s3:::\1/*"]}]}}')
+     | map('from_json') | list }}
+```
+
+Keep it as literal blocks if you prefer explicitness; the point is the schema
+is ordinary data and loops cleanly — the role only ever sees the resolved
+list. Two operational notes:
+
+- **Verify authorization scope, not just liveness.** The role's liveness check
+  proves a credential *authenticates*; it does not prove the policy grants the
+  right verbs. To confirm a service account can do exactly what it should,
+  point your own `rc` alias at its resolved creds and probe:
+  `rc alias set check <endpoint> <access_key> <secret_key>` then
+  `rc ls check/<bucket>` (allowed?) and a put (denied for a read-only account?).
+- **Readable output at estate scale.** A full converge fans out into many
+  tasks; the signal is the end-of-role summary. `ANSIBLE_STDOUT_CALLBACK=yaml`
+  (or a `community.general.diff_*` callback) keeps that readable across dozens
+  of resources.
 
 ## Installing
 

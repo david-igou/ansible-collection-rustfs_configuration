@@ -107,8 +107,19 @@ argument_specs:
                     ONLY a top-level prefix; a nested C(filter) is silently
                     dropped on export, so a rule using one reports drift on
                     every run. An empty prefix (whole bucket) may be omitted.
-                  - 'Minimal whole-bucket expiration rule:'
-                  - '  - id: expire-old-versions'
+                  - >-
+                    Two whole-bucket retention shapes cover most needs.
+                    Expire CURRENT objects N days after creation (typical for
+                    a non-versioned bucket — logs, cluster backups):
+                  - '  - id: expire-objects-30d'
+                  - '    status: Enabled'
+                  - '    expiration:'
+                  - '      days: 30'
+                  - >-
+                    Expire NONCURRENT versions N days after they become
+                    noncurrent (a versioned bucket — keeps the live object,
+                    prunes old versions):
+                  - '  - id: expire-noncurrent-30d'
                   - '    status: Enabled'
                   - '    noncurrentVersionExpiration:'
                   - '      noncurrentDays: 30'

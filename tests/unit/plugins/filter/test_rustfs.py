@@ -187,3 +187,17 @@ def test_ilm_nonempty_prefix_is_preserved():
     whole = [{"id": "b", "status": "Enabled", "expiration": {"days": 15}}]
     assert rustfs_canonical_ilm(scoped) != rustfs_canonical_ilm(whole)
     assert rustfs_canonical_ilm(scoped)[0].get("prefix") == "logs/"
+
+
+def test_ilm_current_object_expiration_is_preserved():
+    """The documented current-object `expiration: {days: N}` shape (verified
+    to round-trip through `rc ilm rule export` unchanged) must pass through
+    canonicalization intact — only the id is stripped — so it compares equal
+    to the server's export and stays idempotent. Distinct from the
+    noncurrent-version shape."""
+    desired = [{"id": "expire-objects-30d", "status": "Enabled", "expiration": {"days": 30}}]
+    server_export = [{"id": "srv-gen", "status": "Enabled", "expiration": {"days": 30}}]
+    assert rustfs_canonical_ilm(desired) == rustfs_canonical_ilm(server_export)
+    # and it is genuinely different from a noncurrent-version rule
+    noncurrent = [{"id": "x", "status": "Enabled", "noncurrentVersionExpiration": {"noncurrentDays": 30}}]
+    assert rustfs_canonical_ilm(desired) != rustfs_canonical_ilm(noncurrent)
