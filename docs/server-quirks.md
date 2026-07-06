@@ -11,8 +11,11 @@ or rc pin bump (run your drift job right after any live server upgrade).
 |---|---|
 | `rc mb` / `bucket create` on an EXISTING bucket returns false success | Existence decided by list-first read, never by the create call |
 | IAM policy `Action`/`Resource` arrays return in a different order on every call (stored as sets) | `rustfs_canonical_policy` filter on both sides of every comparison |
+| Storing a policy injects empty boilerplate into the echo: document-level `ID: ""` and, per statement, `Sid: ""` and `Condition: {}` (verified live: a document with none of these exports with all three) | `rustfs_canonical_policy` drops all three empties on both sides, so a from-scratch document (written without them) stays idempotent instead of re-applying `policy:<name>:update` every run |
 | `rc ilm rule import` REQUIRES an `id` on every rule; export always emits ids | Spec rules must carry ids; comparison strips them (`rustfs_canonical_ilm`) |
-| ILM import is a FULL REPLACE of the bucket's rules | Import is the reconcile primitive — no per-rule editing |
+| ILM export DROPS empty scoping — a whole-bucket rule imported with `prefix: ""` or `filter: {prefix: ""}` comes back with no prefix/filter at all | `rustfs_canonical_ilm` treats empty prefix/filter as absent on both sides, so a whole-bucket rule stays idempotent |
+| ILM honours ONLY a top-level `prefix`; a nested `filter: {prefix: "x/"}` is silently dropped on export even when non-empty (verified live) | Scope rules with a top-level `prefix:`; a nested filter surfaces as persistent drift (not silently masked) so the mistake is visible |
+| ILM import is a FULL REPLACE of the bucket's rules | Import is the reconcile primitive — no per-rule editing; the spec is the whole ruleset for a managed bucket |
 | `rc admin policy rm` while the policy is attached → HTTP 500 | Deletion is out of scope anyway (report-only) |
 | `rc admin policy attach` REPLACES the user's whole policy set (not additive — attaching B to a user holding A leaves only B) | The role attaches the UNION of current + desired, so extras survive and desired policies converge instead of oscillating |
 | No `rc admin policy detach` subcommand exists in 0.1.x | Extra attachments are reported, never removed by the role; an operator CAN remediate manually by replace-attaching the desired-only set, or allowlist via `rustfs_state_ignore_unmanaged` |

@@ -23,8 +23,14 @@
       until: _rustfs_state_bucket_create.rc != 3
       changed_when: true
 
+# `versioning is not none` as well as `is defined`: a bare `versioning:`
+# (YAML null) means "leave unmanaged", same as omitting the key — and it
+# keeps a None out of the `| bool` filter below (which emits a deprecation
+# warning today and errors on ansible-core 2.23).
 - name: "Manage versioning for bucket {{ rustfs_state_bucket.name }}"
-  when: rustfs_state_bucket.versioning is defined
+  when:
+    - rustfs_state_bucket.versioning is defined
+    - rustfs_state_bucket.versioning is not none
   block:
     - name: "Read versioning of bucket {{ rustfs_state_bucket.name }}"
       ansible.builtin.command: >-
@@ -39,12 +45,16 @@
       check_mode: false
       changed_when: false
 
-    # A bucket missing in check mode reads as unversioned.
+    # A bucket missing in check mode reads as unversioned. A freshly-created
+    # bucket can report `enabled: null` (never-configured) — coerce that to
+    # false rather than letting None flow through `| bool` (a deprecation
+    # warning today, an error on ansible-core 2.23).
     - name: "Compute versioning drift for bucket {{ rustfs_state_bucket.name }}"
       ansible.builtin.set_fact:
         _rustfs_state_versioning_current: >-
           {{ _rustfs_state_versioning.rc == 0
-             and ((_rustfs_state_versioning.stdout | from_json).enabled | bool) }}
+             and ((_rustfs_state_versioning.stdout | from_json).enabled
+                  | default(false, true) | bool) }}
 
     - name: "Converge versioning for bucket {{ rustfs_state_bucket.name }}"
       when: (_rustfs_state_versioning_current | bool) != (rustfs_state_bucket.versioning | bool)
