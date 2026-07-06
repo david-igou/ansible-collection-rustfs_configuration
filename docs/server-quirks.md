@@ -46,6 +46,16 @@ Verified live against `1.0.0-beta.8`: an unreachable/transient endpoint
 returns exit 3; connection-refused/reset map to exit 5; bad credentials to
 exit 4.
 
+One asymmetry to know: the exit-4 (AuthError) fast-path applies to
+`alias set`/admin authentication. An **S3 data-path** `AccessDenied` — e.g. a
+liveness `ls` against a bucket the user's policy does not grant — comes back
+as exit **3** (rc's `--json` envelope shows `type: network_error`,
+`retryable: true`). So a live-but-under-privileged credential is *retried*
+through the budget and then surfaces as a liveness failure, not an immediate
+auth error. This is why liveness proves authentication only; verify a
+credential's authorization scope out-of-band (probe it with your own `rc`
+alias).
+
 ## Known unknowns (re-verify on every pin bump)
 
 - **ILM id regeneration on import**: so far the server has preserved provided

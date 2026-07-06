@@ -48,10 +48,18 @@ collection README Quickstart. Two shapes worth calling out up front:
   `ID`/`Sid`/`Condition` boilerplate needed — the server adds those empties and
   the canonical filter absorbs them, so a from-scratch policy stays idempotent.
 - **`lifecycle.rules`**: the rules **array only** (not the `{"rules": [...]}`
-  envelope `rc ilm rule export` prints). Scope with a top-level `prefix:`, not a
-  nested `filter:` (the server keeps only top-level prefix). If a policy or ILM
-  rule shows a change on *every* run, re-run with `--diff` — it prints the exact
-  disagreeing field.
+  envelope `rc ilm rule export` prints). Two whole-bucket retention shapes:
+  `expiration: {days: N}` expires **current objects** (non-versioned buckets —
+  logs, cluster backups), `noncurrentVersionExpiration: {noncurrentDays: N}`
+  expires **old versions** (versioned buckets). Scope with a top-level
+  `prefix:`, not a nested `filter:` (the server keeps only top-level prefix). If
+  a policy or ILM rule shows a change on *every* run, re-run with `--diff` — it
+  prints the exact disagreeing field.
+- **`access_key`** (per user): defaults to the user's `name`; set it only when
+  the stored access key differs from the name. A mismatch between it and the
+  identity the secret actually authenticates as is exactly what liveness
+  catches — liveness proves *authentication*, not *authorization scope* (to
+  check the latter, probe the account's creds with your own `rc` alias).
 
 ## Outputs (stable API)
 
@@ -64,13 +72,19 @@ collection README Quickstart. Two shapes worth calling out up front:
   `rustfs_state_changes`, `rustfs_state_unmanaged_on_server` (note: NOT the
   fact's shorter name), and `rustfs_state_liveness_failures`.
 - With `--diff`, policy/ILM change records carry canonicalized
-  desired-vs-current payloads (secrets-free) in the summary.
+  desired-vs-current payloads (secrets-free) in the summary. Scope: `diffs`
+  covers policy and ILM only; a versioning change surfaces in `changes`
+  (e.g. `…:bucket:<name>:versioning:enable`), not `diffs` — the two-state
+  current-vs-desired is implicit in the action.
 
 ## Behavioral invariants
 
 1. Read-first reconcile; canonical comparison via the collection filters.
 2. Deletion safety: unmanaged resources are reported (optionally gated),
    never deleted; extra attachments report-only (no detach in rc 0.1.x).
+   Policy attach is a full REPLACE server-side, so the role always sends
+   `union(existing, desired)` — desired policies converge, out-of-band
+   extras survive and stay visible as `extra-attachment` reports.
 3. Secrets: never looked up, never generated, never rewritten for an
    existing user (re-`user add` would rotate the secret); `no_log`
    everywhere secrets flow (including `user add`, which echoes the secret).
