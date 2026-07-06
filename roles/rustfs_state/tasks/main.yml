@@ -323,7 +323,10 @@
     that: rustfs_state_liveness_failures | length == 0
     fail_msg: >-
       Provided credentials no longer authenticate against the server:
-      {{ rustfs_state_liveness_failures | join(', ') }}
+      {{ rustfs_state_liveness_failures | join(', ') }}.
+      Check the resolved secret_key/access_key against the server (an
+      out-of-band rotation or a stale secret-store item), and that each
+      user's liveness_bucket exists and is listable by that user.
 
 - name: Fail on unmanaged server-side resources (opt-in gate)
   ansible.builtin.assert:

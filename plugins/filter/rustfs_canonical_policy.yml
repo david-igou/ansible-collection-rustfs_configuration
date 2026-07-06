@@ -5,8 +5,11 @@ DOCUMENTATION:
   short_description: Canonicalize a RustFS IAM policy document for comparison
   description:
     - Sorts C(Action)/C(Resource) lists inside each statement, drops the empty
-      C(Condition) and C(ID) fields the server adds, and orders statements
-      deterministically.
+      C(Condition), C(Sid) and C(ID) fields the server injects on store, and
+      orders statements deterministically.
+    - Dropping the empty boilerplate is what lets a from-scratch policy
+      document (naturally written without C(ID)/C(Sid)/C(Condition)) converge
+      to steady state instead of re-applying C(update) every run.
     - RustFS returns policy arrays in a different order on every call (they
       are stored as sets); passing both sides of a comparison through this
       filter prevents false drift.

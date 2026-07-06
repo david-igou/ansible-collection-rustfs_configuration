@@ -15,7 +15,9 @@ argument_specs:
         do not, and the play fails on any drift or dead credential).
     options:
       rustfs_state_endpoint:
-        description: Base URL of the instance (https://host:port).
+        description:
+          - Base URL of the instance (C(https://host:port)). C(http://) is
+            also accepted for a plain-HTTP dev/test instance.
         type: str
         required: true
       rustfs_state_admin_access_key:
@@ -42,7 +44,9 @@ argument_specs:
         type: str
         default: "{{ inventory_hostname }}"
       rustfs_state_tls_insecure:
-        description: Allow insecure TLS on both alias registrations.
+        description:
+          - Allow insecure TLS (self-signed / private-CA) on both alias
+            registrations. TLS-only — a no-op for C(http://) endpoints.
         type: bool
         default: false
       rustfs_state_policies:
@@ -56,10 +60,21 @@ argument_specs:
             type: str
             required: true
           document:
-            description: >-
-              IAM policy document, verbatim from C(rc admin policy info)
-              (free-form dict; ordering differences are absorbed by the
-              collection's canonical-comparison filters).
+            description:
+              - IAM policy document (free-form dict). Write it the natural
+                way — a C(Version) plus a C(Statement) list of
+                C(Effect)/C(Action)/C(Resource) entries; no document-level
+                C(ID) or per-statement C(Sid)/C(Condition) boilerplate is
+                needed. The server injects those empties on store and the
+                canonical-comparison filter absorbs them (along with array
+                ordering), so a from-scratch document converges to steady
+                state.
+              - 'Minimal example:'
+              - '  Version: "2012-10-17"'
+              - '  Statement:'
+              - '    - Effect: Allow'
+              - '      Action: [s3:GetObject, s3:PutObject, s3:ListBucket]'
+              - '      Resource: [arn:aws:s3:::app-data, arn:aws:s3:::app-data/*]'
             type: dict
             required: true
       rustfs_state_buckets:
@@ -73,18 +88,30 @@ argument_specs:
             type: str
             required: true
           versioning:
-            description: Desired versioning state. Omit to leave unmanaged.
+            description: Desired versioning state. Omit (or set null) to leave unmanaged.
             type: bool
           lifecycle:
             description: Lifecycle configuration. Omit to leave unmanaged.
             type: dict
             options:
               rules:
-                description: >-
-                  Lifecycle rules, verbatim from C(rc ilm rule export). Every
-                  rule MUST carry an C(id) (import rejects id-less rules);
-                  ids are ignored in drift comparison. An empty list is
-                  rejected (clear-all semantics unverified on the server).
+                description:
+                  - Lifecycle rules — the C(rules) ARRAY only, not the
+                    rules-wrapper object that C(rc ilm rule export) prints.
+                    Every rule MUST carry an C(id) (import rejects id-less
+                    rules); ids are ignored in drift comparison. An empty list
+                    is rejected (clear-all semantics unverified on the server)
+                    — omit C(lifecycle) to leave rules unmanaged.
+                  - To scope a rule to a path, use a top-level C(prefix) key
+                    (for example C(prefix) of C(logs/)). The server honours
+                    ONLY a top-level prefix; a nested C(filter) is silently
+                    dropped on export, so a rule using one reports drift on
+                    every run. An empty prefix (whole bucket) may be omitted.
+                  - 'Minimal whole-bucket expiration rule:'
+                  - '  - id: expire-old-versions'
+                  - '    status: Enabled'
+                  - '    noncurrentVersionExpiration:'
+                  - '      noncurrentDays: 30'
                 type: list
                 elements: dict
                 required: true

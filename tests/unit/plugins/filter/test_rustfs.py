@@ -34,6 +34,36 @@ POLICY = {
 }
 
 
+# A from-scratch document as a user naturally writes it: no document-level
+# ID, no per-statement Sid/Condition boilerplate.
+POLICY_NO_SID_DESIRED = {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": ["s3:GetObject", "s3:ListBucket"],
+            "Resource": ["arn:aws:s3:::app-data", "arn:aws:s3:::app-data/*"],
+        }
+    ],
+}
+
+# The SAME policy as the server echoes it back (verified live on
+# 1.0.0-beta.8): empty ID/Sid/Condition injected, arrays reordered.
+POLICY_SERVER_ECHO = {
+    "ID": "",
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "",
+            "Effect": "Allow",
+            "Condition": {},
+            "Action": ["s3:ListBucket", "s3:GetObject"],
+            "Resource": ["arn:aws:s3:::app-data/*", "arn:aws:s3:::app-data"],
+        }
+    ],
+}
+
+
 def _shuffled_policy():
     """The same policy as the server returns it on another call: arrays and
     statements reordered (the server stores sets)."""
@@ -66,6 +96,27 @@ def test_policy_input_is_not_mutated():
     p = copy.deepcopy(POLICY)
     rustfs_canonical_policy(p)
     assert p == POLICY
+
+
+def test_policy_empty_sid_is_dropped():
+    canon = rustfs_canonical_policy(POLICY_NO_SID_DESIRED)
+    assert all("Sid" not in s for s in canon["Statement"])
+
+
+def test_policy_from_scratch_matches_server_echo():
+    """The natural hand-authored document (no ID/Sid/Condition boilerplate)
+    must equal the server's echo, which injects empty ID/Sid/Condition — else
+    the policy re-applies `update` on every run. Regression for the empty-Sid
+    idempotence trap (the server adds Sid: "" but the filter used to keep it).
+    """
+    assert rustfs_canonical_policy(POLICY_NO_SID_DESIRED) == rustfs_canonical_policy(
+        POLICY_SERVER_ECHO
+    )
+
+
+def test_policy_nonempty_sid_passes_through():
+    canon = rustfs_canonical_policy(POLICY)
+    assert any(s.get("Sid") == "ListAndDescribeBucket" for s in canon["Statement"])
 
 
 ILM_RULES = [
@@ -111,3 +162,28 @@ def test_ilm_rule_content_differences_are_detected():
     changed = copy.deepcopy(ILM_RULES)
     changed[0]["noncurrentVersionExpiration"]["noncurrentDays"] = 7
     assert rustfs_canonical_ilm(ILM_RULES) != rustfs_canonical_ilm(changed)
+
+
+def test_ilm_empty_scoping_matches_server_drop():
+    """A whole-bucket rule written with an explicit empty prefix/filter must
+    equal the server's export, which drops empty scoping entirely — else the
+    rule re-imports every run. Regression for the empty-filter idempotence
+    trap (verified live: import `filter: {prefix: ""}` -> export has no
+    filter). Covers all three empty shapes a user might write.
+    """
+    server_export = [{"id": "srv-gen-id", "status": "Enabled", "expiration": {"days": 30}}]
+    for empty_scoped in (
+        [{"id": "a", "status": "Enabled", "prefix": "", "expiration": {"days": 30}}],
+        [{"id": "a", "status": "Enabled", "filter": {"prefix": ""}, "expiration": {"days": 30}}],
+        [{"id": "a", "status": "Enabled", "filter": {}, "expiration": {"days": 30}}],
+    ):
+        assert rustfs_canonical_ilm(empty_scoped) == rustfs_canonical_ilm(server_export)
+
+
+def test_ilm_nonempty_prefix_is_preserved():
+    """A real top-level prefix must survive canonicalization (the server
+    honours it), so scoped rules still compare correctly."""
+    scoped = [{"id": "a", "status": "Enabled", "prefix": "logs/", "expiration": {"days": 15}}]
+    whole = [{"id": "b", "status": "Enabled", "expiration": {"days": 15}}]
+    assert rustfs_canonical_ilm(scoped) != rustfs_canonical_ilm(whole)
+    assert rustfs_canonical_ilm(scoped)[0].get("prefix") == "logs/"

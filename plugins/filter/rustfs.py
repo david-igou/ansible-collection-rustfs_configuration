@@ -18,7 +18,16 @@ import json
 
 
 def rustfs_canonical_policy(doc):
-    """Canonicalize an IAM policy document for comparison."""
+    """Canonicalize an IAM policy document for comparison.
+
+    The server echoes every policy back with empty boilerplate fields it
+    injects on store: a document-level ``ID: ""`` and, on each statement,
+    ``Sid: ""`` and ``Condition: {}``. A hand-authored document that omits
+    these (the natural way to write one) would otherwise never equal the
+    server's echo, re-applying ``policy:<name>:update`` on every run. Both
+    sides go through this filter, so the empties are dropped symmetrically
+    and a from-scratch policy converges to steady state.
+    """
     d = copy.deepcopy(doc)
     statements = d.get("Statement", [])
     for s in statements:
@@ -27,6 +36,8 @@ def rustfs_canonical_policy(doc):
                 s[k] = sorted(s[k])
         if s.get("Condition") == {}:
             del s["Condition"]
+        if s.get("Sid") == "":
+            del s["Sid"]
     d["Statement"] = sorted(statements, key=lambda s: json.dumps(s, sort_keys=True))
     if d.get("ID") == "":
         del d["ID"]
@@ -39,10 +50,27 @@ def rustfs_canonical_ilm(rules):
     Strips server-generated rule ids (lowercase ``id`` — the only casing
     rc 0.1.x emits, pinned by unit fixture) and orders rules
     deterministically.
+
+    Also drops empty scoping: an empty top-level ``prefix: ""`` or an empty
+    ``filter`` (``{}`` or ``{"prefix": ""}``) means "the whole bucket", which
+    the server omits entirely on export. A whole-bucket rule written with an
+    explicit empty prefix/filter would otherwise never equal the server's
+    export, re-importing ``lifecycle:import`` on every run. (A NON-empty
+    ``filter`` is left as-is; the server honours only a top-level ``prefix``,
+    so a nested non-empty filter surfaces as persistent drift rather than
+    being silently masked — see docs/server-quirks.md.)
     """
     rs = copy.deepcopy(rules)
     for r in rs:
         r.pop("id", None)
+        if r.get("prefix") == "":
+            del r["prefix"]
+        f = r.get("filter")
+        if isinstance(f, dict):
+            if f.get("prefix") == "":
+                del f["prefix"]
+            if not f:
+                del r["filter"]
     return sorted(rs, key=lambda r: json.dumps(r, sort_keys=True))
 
 

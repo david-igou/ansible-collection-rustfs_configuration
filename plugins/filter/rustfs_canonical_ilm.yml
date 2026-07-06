@@ -9,6 +9,11 @@ DOCUMENTATION:
     - C(rc ilm rule import) requires an id on every rule while the server may
       regenerate them; stripping ids on both sides of a comparison prevents
       false drift either way.
+    - Also drops empty scoping (an empty top-level C(prefix) or an empty
+      C(filter)) so a whole-bucket rule written with an explicit empty
+      prefix/filter still matches the server's export, which omits it — a
+      NON-empty filter is left as-is (the server honours only a top-level
+      C(prefix)).
   positional: _input
   options:
     _input:

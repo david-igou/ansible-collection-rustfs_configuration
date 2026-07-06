@@ -31,7 +31,7 @@ host_vars, where they are just values of this schema.
 | `rustfs_state_buckets` | `[]` | Managed buckets (`{name, versioning?, lifecycle?}`) |
 | `rustfs_state_users` | `[]` | Managed users (`{name, policies, secret_key?, access_key?, liveness_bucket?}`) |
 | `rustfs_state_alias` | `inventory_hostname` | rc alias (charset-asserted: `^[a-z0-9][a-z0-9-]*$`) |
-| `rustfs_state_tls_insecure` | `false` | Allow insecure TLS on alias registrations |
+| `rustfs_state_tls_insecure` | `false` | Allow insecure TLS on alias registrations (TLS-only; no-op for `http://`) |
 | `rustfs_state_rc_version` / `_checksum` / `_arch` / `_url` | pinned | rc toolchain pin (bump version+checksum together) |
 | `rustfs_state_rc_binary` | `""` | Pre-installed rc path (skips download) |
 | `rustfs_state_retries` / `rustfs_state_retry_delay` | `8` / `3` | Retry policy (network-classified errors only) |
@@ -40,8 +40,18 @@ host_vars, where they are just values of this schema.
 | `rustfs_state_fail_on_unmanaged` | `false` | Escalate unmanaged resources to a failure |
 | `rustfs_state_ignore_unmanaged` | `[]` | `<kind>:<name>` allowlist for the unmanaged report/gate |
 
-Spec details (verbatim exports, ILM id requirement, liveness semantics) are
-documented in `meta/argument_specs.yml` and the collection README.
+Spec details — worked `document` / `lifecycle.rules` examples, the ILM id
+requirement, and liveness semantics — are in `meta/argument_specs.yml` and the
+collection README Quickstart. Two shapes worth calling out up front:
+
+- **Policy `document`**: write it plainly (`Version` + `Statement` list); no
+  `ID`/`Sid`/`Condition` boilerplate needed — the server adds those empties and
+  the canonical filter absorbs them, so a from-scratch policy stays idempotent.
+- **`lifecycle.rules`**: the rules **array only** (not the `{"rules": [...]}`
+  envelope `rc ilm rule export` prints). Scope with a top-level `prefix:`, not a
+  nested `filter:` (the server keeps only top-level prefix). If a policy or ILM
+  rule shows a change on *every* run, re-run with `--diff` — it prints the exact
+  disagreeing field.
 
 ## Outputs (stable API)
 
