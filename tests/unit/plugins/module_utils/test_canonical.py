@@ -7,7 +7,7 @@ __metaclass__ = type
 
 from datetime import datetime, timezone
 
-from ansible_collections.david_igou.rustfs_configuration.plugins.module_utils.canonical import (
+from ansible_collections.david_igou.rustfs.plugins.module_utils.canonical import (
     canonical_lifecycle_rules,
     canonical_policy,
 )

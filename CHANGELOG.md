@@ -22,7 +22,7 @@ New content:
 - `module_utils/rustfs.py` (shared clients, error taxonomy, retry) and
   `module_utils/canonical.py` (single source of canonicalization, shared
   with the filter plugins).
-- Action group `david_igou.rustfs_configuration.rustfs` for
+- Action group `david_igou.rustfs.rustfs` for
   `module_defaults`; `RUSTFS_*` environment fallbacks for every
   connection option.
 - Groups, service accounts, and quotas are newly manageable (module-level;
@@ -30,6 +30,13 @@ New content:
 
 Breaking changes (role spec):
 
+- **The collection is renamed `david_igou.rustfs`** (was
+  `david_igou.rustfs_configuration`): every FQCN changes —
+  `david_igou.rustfs.rustfs_state`, `david_igou.rustfs.rustfs_bucket`,
+  filter `david_igou.rustfs.rustfs_canonical_policy`, action group
+  `group/david_igou.rustfs.rustfs`. Update `requirements.yml` and any
+  playbook references; checkouts belong at
+  `ansible_collections/david_igou/rustfs`.
 - rc pin vars removed: `rustfs_state_rc_version`, `_checksum`, `_arch`,
   `_url`, `_binary`; `rustfs_state_alias` removed (no alias concept, no
   charset asserts).

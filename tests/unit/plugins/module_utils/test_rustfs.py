@@ -12,8 +12,8 @@ import json
 import pytest
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 
-from ansible_collections.david_igou.rustfs_configuration.plugins.module_utils import rustfs
-from ansible_collections.david_igou.rustfs_configuration.plugins.module_utils.rustfs import (
+from ansible_collections.david_igou.rustfs.plugins.module_utils import rustfs
+from ansible_collections.david_igou.rustfs.plugins.module_utils.rustfs import (
     RustfsAdminClient,
     RustfsAuthError,
     RustfsConflictError,

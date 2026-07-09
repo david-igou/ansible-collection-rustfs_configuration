@@ -22,7 +22,7 @@ description:
     state.
 version_added: "2.0.0"
 extends_documentation_fragment:
-  - david_igou.rustfs_configuration.rustfs
+  - david_igou.rustfs.rustfs
 options:
   name:
     description:
@@ -34,7 +34,7 @@ options:
       - Whether the policy should exist.
       - Removing a policy that is still attached to a user or group fails
         on the server side (RustFS 1.0.0-beta.8 returns HTTP 500) - detach
-        it first with M(david_igou.rustfs_configuration.rustfs_policy_attachment).
+        it first with M(david_igou.rustfs.rustfs_policy_attachment).
     type: str
     choices:
       - present
@@ -51,7 +51,7 @@ author:
 
 EXAMPLES = r"""
 - name: Create an app read-write policy
-  david_igou.rustfs_configuration.rustfs_policy:
+  david_igou.rustfs.rustfs_policy:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -70,7 +70,7 @@ EXAMPLES = r"""
             - arn:aws:s3:::backups/*
 
 - name: Remove a policy
-  david_igou.rustfs_configuration.rustfs_policy:
+  david_igou.rustfs.rustfs_policy:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -99,10 +99,10 @@ policy:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
 
-from ansible_collections.david_igou.rustfs_configuration.plugins.module_utils.canonical import (
+from ansible_collections.david_igou.rustfs.plugins.module_utils.canonical import (
     canonical_policy,
 )
-from ansible_collections.david_igou.rustfs_configuration.plugins.module_utils.rustfs import (
+from ansible_collections.david_igou.rustfs.plugins.module_utils.rustfs import (
     RustfsAdminClient,
     RustfsError,
     rustfs_argument_spec,

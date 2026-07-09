@@ -18,7 +18,7 @@
 # authorization and fails neither task — the verdict lands in `usable`.
 
 - name: "Probe credential liveness for user {{ rustfs_state_user.name }}"
-  david_igou.rustfs_configuration.rustfs_credential_info:
+  david_igou.rustfs.rustfs_credential_info:
     access_key: "{{ rustfs_state_user.access_key | default(rustfs_state_user.name) }}"
     secret_key: "{{ rustfs_state_user.secret_key }}"
     bucket: "{{ rustfs_state_user.liveness_bucket }}"

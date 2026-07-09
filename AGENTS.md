@@ -1,4 +1,4 @@
-# david_igou.rustfs_configuration — agent notes
+# david_igou.rustfs — agent notes
 
 Ansible collection: declarative in-server state for RustFS via native
 modules (direct S3 + admin-API calls from Python; botocore is the single
@@ -49,7 +49,7 @@ deployment is out of scope by design.
 - Build: `ansible-galaxy collection build`
 - Units: `ansible-test units --venv --requirements` (needs botocore →
   tests/unit/requirements.txt; run from an
-  `ansible_collections/david_igou/rustfs_configuration` checkout)
+  `ansible_collections/david_igou/rustfs` checkout)
 - Sanity: `ansible-test sanity --venv`
 - Lint: `ansible-lint` (offline is OFF on purpose — lint must self-install
   the collection to resolve the FQCN modules; see .config/ansible-lint.yml)

@@ -2,7 +2,7 @@
 requires_ansible: ">=2.16.0"
 
 # module_defaults group: set endpoint/access_key/secret_key once for every
-# rustfs_* module via `module_defaults: {group/david_igou.rustfs_configuration.rustfs: {...}}`.
+# rustfs_* module via `module_defaults: {group/david_igou.rustfs.rustfs: {...}}`.
 action_groups:
   rustfs:
     - rustfs_bucket

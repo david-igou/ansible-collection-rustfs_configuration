@@ -20,7 +20,7 @@
           | map(attribute='policies') | first) | default([]) }}
 
 - name: "Reconcile user {{ rustfs_state_user.name }}"
-  david_igou.rustfs_configuration.rustfs_user:
+  david_igou.rustfs.rustfs_user:
     name: "{{ rustfs_state_user.name }}"
     secret: "{{ rustfs_state_user.secret_key | default(omit) }}"
     state: present
@@ -56,7 +56,7 @@
     # attachment (already recorded above) cannot be probed against a user
     # that does not exist yet.
     - name: "Attach policies to user {{ rustfs_state_user.name }}"
-      david_igou.rustfs_configuration.rustfs_policy_attachment:
+      david_igou.rustfs.rustfs_policy_attachment:
         user: "{{ rustfs_state_user.name }}"
         policies: "{{ rustfs_state_user.policies }}"
         exclusive: false

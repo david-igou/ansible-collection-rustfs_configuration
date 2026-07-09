@@ -72,7 +72,7 @@
     # non-empty — a bare module call makes ansible-lint's syntax-check
     # resolve the module eagerly, which fails on an uninstalled checkout.
     - name: Validate admin credentials
-      david_igou.rustfs_configuration.rustfs_credential_info:
+      david_igou.rustfs.rustfs_credential_info:
         endpoint: "{{ rustfs_state_endpoint }}"
       register: _rustfs_state_admin_probe
 
@@ -86,17 +86,17 @@
           caller's data.
 
     - name: Read buckets
-      david_igou.rustfs_configuration.rustfs_bucket_info:
+      david_igou.rustfs.rustfs_bucket_info:
         endpoint: "{{ rustfs_state_endpoint }}"
       register: _rustfs_state_bucket_read
 
     - name: Read policies
-      david_igou.rustfs_configuration.rustfs_policy_info:
+      david_igou.rustfs.rustfs_policy_info:
         endpoint: "{{ rustfs_state_endpoint }}"
       register: _rustfs_state_policy_read
 
     - name: Read users
-      david_igou.rustfs_configuration.rustfs_user_info:
+      david_igou.rustfs.rustfs_user_info:
         endpoint: "{{ rustfs_state_endpoint }}"
       register: _rustfs_state_user_read
 

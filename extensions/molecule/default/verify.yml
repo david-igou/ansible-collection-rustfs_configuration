@@ -32,7 +32,7 @@
     # ---- 1. repair injected drift, assert the exact change set ----
     - name: Re-converge over injected drift
       ansible.builtin.include_role:
-        name: david_igou.rustfs_configuration.rustfs_state
+        name: david_igou.rustfs.rustfs_state
 
     - name: Assert all four drifts were caught and repaired (exact set)
       ansible.builtin.assert:
@@ -62,7 +62,7 @@
     # ---- 2. clean follow-up run ----
     - name: Converge again (must be clean)
       ansible.builtin.include_role:
-        name: david_igou.rustfs_configuration.rustfs_state
+        name: david_igou.rustfs.rustfs_state
 
     - name: Assert the follow-up run found nothing to do
       ansible.builtin.assert:
@@ -89,7 +89,7 @@
           block:
             - name: Include role under check mode
               ansible.builtin.include_role:
-                name: david_igou.rustfs_configuration.rustfs_state
+                name: david_igou.rustfs.rustfs_state
 
         - name: Unreachable — drift detection must have failed above
           ansible.builtin.fail:
@@ -117,7 +117,7 @@
     # ---- 4. real converge applies exactly the pending changes ----
     - name: Converge the probe spec for real
       ansible.builtin.include_role:
-        name: david_igou.rustfs_configuration.rustfs_state
+        name: david_igou.rustfs.rustfs_state
       vars:
         rustfs_state_buckets: "{{ rustfs_molecule_buckets_base + [_probe_versioned] }}"
 
@@ -142,7 +142,7 @@
     # ---- 5. versioning suspend branch ----
     - name: Converge with the probe bucket set to versioning false
       ansible.builtin.include_role:
-        name: david_igou.rustfs_configuration.rustfs_state
+        name: david_igou.rustfs.rustfs_state
       vars:
         rustfs_state_buckets: "{{ rustfs_molecule_buckets_base + [_probe_suspended] }}"
 
@@ -168,7 +168,7 @@
     # repair and that the extra survives it.
     - name: Converge the original spec (probe bucket + extra attachment now unmanaged)
       ansible.builtin.include_role:
-        name: david_igou.rustfs_configuration.rustfs_state
+        name: david_igou.rustfs.rustfs_state
 
     - name: Assert the wiped attachment was repaired and both extras are reported
       ansible.builtin.assert:
@@ -184,7 +184,7 @@
 
     - name: Converge again (union attach must be stable)
       ansible.builtin.include_role:
-        name: david_igou.rustfs_configuration.rustfs_state
+        name: david_igou.rustfs.rustfs_state
 
     - name: Assert the union attach converged with extras intact
       ansible.builtin.assert:
@@ -202,7 +202,7 @@
       block:
         - name: Run role with fail_on_unmanaged
           ansible.builtin.include_role:
-            name: david_igou.rustfs_configuration.rustfs_state
+            name: david_igou.rustfs.rustfs_state
           vars:
             rustfs_state_fail_on_unmanaged: true
 
@@ -220,7 +220,7 @@
 
     - name: Run role with the probe allowlisted via ignore_unmanaged
       ansible.builtin.include_role:
-        name: david_igou.rustfs_configuration.rustfs_state
+        name: david_igou.rustfs.rustfs_state
       vars:
         rustfs_state_fail_on_unmanaged: true
         rustfs_state_ignore_unmanaged:
@@ -247,7 +247,7 @@
       block:
         - name: Run role with a bad user secret
           ansible.builtin.include_role:
-            name: david_igou.rustfs_configuration.rustfs_state
+            name: david_igou.rustfs.rustfs_state
           vars:
             rustfs_state_users:
               - name: app-user
@@ -279,7 +279,7 @@
       block:
         - name: Run role with a wrong admin secret against the live server
           ansible.builtin.include_role:
-            name: david_igou.rustfs_configuration.rustfs_state
+            name: david_igou.rustfs.rustfs_state
           vars:
             rustfs_state_admin_secret_key: definitely-not-the-admin-secret
             rustfs_state_policies: []
@@ -310,7 +310,7 @@
       block:
         - name: Run role against an unreachable endpoint with a small retry budget
           ansible.builtin.include_role:
-            name: david_igou.rustfs_configuration.rustfs_state
+            name: david_igou.rustfs.rustfs_state
           vars:
             rustfs_state_endpoint: http://127.0.0.1:9099
             rustfs_state_policies: []

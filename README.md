@@ -1,4 +1,4 @@
-# david_igou.rustfs_configuration
+# david_igou.rustfs
 
 Declarative in-server state management for [RustFS](https://rustfs.com)
 object-storage servers, via **native Ansible modules** that speak the two
@@ -34,7 +34,7 @@ deliberately out of scope.
 All modules share one connection interface (`endpoint`, `access_key`,
 `secret_key`, TLS/retry options — also injectable via `RUSTFS_*`
 environment variables) and are grouped under the
-`david_igou.rustfs_configuration.rustfs` action group for
+`david_igou.rustfs.rustfs` action group for
 `module_defaults`.
 
 ## Design invariants
@@ -142,7 +142,7 @@ rustfs_state_users:
   hosts: rustfs_servers
   gather_facts: false
   roles:
-    - david_igou.rustfs_configuration.rustfs_state
+    - david_igou.rustfs.rustfs_state
 ```
 
 - Converge: `ansible-playbook site.yml`
@@ -162,7 +162,7 @@ deletions) is available as raw modules:
 
 ```yaml
 - name: Scoped service account for velero
-  david_igou.rustfs_configuration.rustfs_service_account:
+  david_igou.rustfs.rustfs_service_account:
     endpoint: https://nas.example.net:20292
     access_key: "{{ admin_ak }}"
     secret_key: "{{ admin_sk }}"
@@ -180,7 +180,7 @@ Set connection args once per play with the action group:
 
 ```yaml
 module_defaults:
-  group/david_igou.rustfs_configuration.rustfs:
+  group/david_igou.rustfs.rustfs:
     endpoint: https://nas.example.net:20292
     access_key: "{{ admin_ak }}"
     secret_key: "{{ admin_sk }}"
@@ -264,8 +264,8 @@ Molecule needs the repo checked out at a collection path and run from the
 collection root (so `extensions/molecule/config.yml` engages):
 
 ```console
-git clone <repo> ansible_collections/david_igou/rustfs_configuration
-cd ansible_collections/david_igou/rustfs_configuration
+git clone <repo> ansible_collections/david_igou/rustfs
+cd ansible_collections/david_igou/rustfs
 make test        # full molecule suite (podman required)
 ```
 

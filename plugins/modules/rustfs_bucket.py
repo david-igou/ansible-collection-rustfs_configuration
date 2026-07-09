@@ -19,7 +19,7 @@ description:
     idempotent.
 version_added: "2.0.0"
 extends_documentation_fragment:
-  - david_igou.rustfs_configuration.rustfs
+  - david_igou.rustfs.rustfs
 options:
   name:
     description:
@@ -51,7 +51,7 @@ author:
 
 EXAMPLES = r"""
 - name: Create a bucket with versioning enabled
-  david_igou.rustfs_configuration.rustfs_bucket:
+  david_igou.rustfs.rustfs_bucket:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -59,14 +59,14 @@ EXAMPLES = r"""
     versioning: enabled
 
 - name: Ensure a bucket exists, versioning unmanaged
-  david_igou.rustfs_configuration.rustfs_bucket:
+  david_igou.rustfs.rustfs_bucket:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
     name: scratch
 
 - name: Remove a bucket
-  david_igou.rustfs_configuration.rustfs_bucket:
+  david_igou.rustfs.rustfs_bucket:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -97,7 +97,7 @@ bucket:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
 
-from ansible_collections.david_igou.rustfs_configuration.plugins.module_utils.rustfs import (
+from ansible_collections.david_igou.rustfs.plugins.module_utils.rustfs import (
     RustfsError,
     RustfsNotFoundError,
     rustfs_argument_spec,

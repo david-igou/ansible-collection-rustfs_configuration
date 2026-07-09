@@ -4,7 +4,7 @@
 # See https://docs.ansible.com/ansible/latest/dev_guide/collections_galaxy_meta.html
 
 namespace: "david_igou"
-name: "rustfs_configuration"
+name: "rustfs"
 version: 2.0.0
 readme: README.md
 authors:
@@ -37,7 +37,7 @@ issues: https://github.com/david-igou/ansible-collection-rustfs_configuration/is
 build_ignore:
   - .gitignore
   - .ansible
-  - david_igou-rustfs_configuration-*.tar.gz
+  - david_igou-rustfs-*.tar.gz
   - importer_result.json
   - tests
   - extensions

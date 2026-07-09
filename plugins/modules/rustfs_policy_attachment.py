@@ -22,7 +22,7 @@ description:
     on RustFS).
 version_added: "2.0.0"
 extends_documentation_fragment:
-  - david_igou.rustfs_configuration.rustfs
+  - david_igou.rustfs.rustfs
 options:
   user:
     description:
@@ -55,7 +55,7 @@ author:
 
 EXAMPLES = r"""
 - name: Ensure the app policy is attached (out-of-band extras survive)
-  david_igou.rustfs_configuration.rustfs_policy_attachment:
+  david_igou.rustfs.rustfs_policy_attachment:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -64,7 +64,7 @@ EXAMPLES = r"""
       - app-rw
 
 - name: Make the attachment set exactly these policies (detaches extras)
-  david_igou.rustfs_configuration.rustfs_policy_attachment:
+  david_igou.rustfs.rustfs_policy_attachment:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -75,7 +75,7 @@ EXAMPLES = r"""
     exclusive: true
 
 - name: Attach a policy to a group
-  david_igou.rustfs_configuration.rustfs_policy_attachment:
+  david_igou.rustfs.rustfs_policy_attachment:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -96,7 +96,7 @@ policies:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
 
-from ansible_collections.david_igou.rustfs_configuration.plugins.module_utils.rustfs import (
+from ansible_collections.david_igou.rustfs.plugins.module_utils.rustfs import (
     RustfsAdminClient,
     RustfsError,
     rustfs_argument_spec,

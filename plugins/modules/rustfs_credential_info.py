@@ -24,7 +24,7 @@ description:
     B(probed) pair, not an admin credential.
 version_added: "2.0.0"
 extends_documentation_fragment:
-  - david_igou.rustfs_configuration.rustfs
+  - david_igou.rustfs.rustfs
 options:
   bucket:
     description:
@@ -37,7 +37,7 @@ author:
 
 EXAMPLES = r"""
 - name: Verify a user credential can list its bucket
-  david_igou.rustfs_configuration.rustfs_credential_info:
+  david_igou.rustfs.rustfs_credential_info:
     endpoint: https://nas.example.net:20292
     access_key: app-backups
     secret_key: EXAMPLEusersecret
@@ -88,7 +88,7 @@ credential:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
 
-from ansible_collections.david_igou.rustfs_configuration.plugins.module_utils.rustfs import (
+from ansible_collections.david_igou.rustfs.plugins.module_utils.rustfs import (
     RustfsAuthError,
     RustfsError,
     RustfsNotFoundError,

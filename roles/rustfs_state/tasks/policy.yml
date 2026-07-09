@@ -4,7 +4,7 @@
 # boilerplate and reorders arrays), and writes only on mismatch.
 
 - name: "Reconcile policy {{ rustfs_state_policy.name }}"
-  david_igou.rustfs_configuration.rustfs_policy:
+  david_igou.rustfs.rustfs_policy:
     name: "{{ rustfs_state_policy.name }}"
     document: "{{ rustfs_state_policy.document }}"
     state: present

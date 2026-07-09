@@ -17,7 +17,7 @@ description:
   - RustFS currently supports only hard quotas.
 version_added: "2.0.0"
 extends_documentation_fragment:
-  - david_igou.rustfs_configuration.rustfs
+  - david_igou.rustfs.rustfs
 options:
   bucket:
     description:
@@ -44,7 +44,7 @@ author:
 
 EXAMPLES = r"""
 - name: Cap the backups bucket at 500 GiB
-  david_igou.rustfs_configuration.rustfs_bucket_quota:
+  david_igou.rustfs.rustfs_bucket_quota:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -52,7 +52,7 @@ EXAMPLES = r"""
     size: 500GB
 
 - name: Remove the quota
-  david_igou.rustfs_configuration.rustfs_bucket_quota:
+  david_igou.rustfs.rustfs_bucket_quota:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -84,7 +84,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.text.formatters import human_to_bytes
 
-from ansible_collections.david_igou.rustfs_configuration.plugins.module_utils.rustfs import (
+from ansible_collections.david_igou.rustfs.plugins.module_utils.rustfs import (
     RustfsAdminClient,
     RustfsError,
     rustfs_argument_spec,

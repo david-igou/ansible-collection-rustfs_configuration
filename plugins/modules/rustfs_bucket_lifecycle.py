@@ -21,7 +21,7 @@ description:
     false drift.
 version_added: "2.0.0"
 extends_documentation_fragment:
-  - david_igou.rustfs_configuration.rustfs
+  - david_igou.rustfs.rustfs
 options:
   bucket:
     description:
@@ -57,7 +57,7 @@ author:
 
 EXAMPLES = r"""
 - name: Expire objects under tmp/ after 7 days
-  david_igou.rustfs_configuration.rustfs_bucket_lifecycle:
+  david_igou.rustfs.rustfs_bucket_lifecycle:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -69,7 +69,7 @@ EXAMPLES = r"""
           Days: 7
 
 - name: Remove the whole lifecycle configuration
-  david_igou.rustfs_configuration.rustfs_bucket_lifecycle:
+  david_igou.rustfs.rustfs_bucket_lifecycle:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -96,10 +96,10 @@ import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
 
-from ansible_collections.david_igou.rustfs_configuration.plugins.module_utils.canonical import (
+from ansible_collections.david_igou.rustfs.plugins.module_utils.canonical import (
     canonical_lifecycle_rules,
 )
-from ansible_collections.david_igou.rustfs_configuration.plugins.module_utils.rustfs import (
+from ansible_collections.david_igou.rustfs.plugins.module_utils.rustfs import (
     RustfsError,
     RustfsNotFoundError,
     rustfs_argument_spec,

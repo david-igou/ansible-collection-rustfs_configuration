@@ -7,7 +7,7 @@ __metaclass__ = type
 
 import copy
 
-from ansible_collections.david_igou.rustfs_configuration.plugins.filter.rustfs import (
+from ansible_collections.david_igou.rustfs.plugins.filter.rustfs import (
     rustfs_canonical_ilm,
     rustfs_canonical_policy,
 )

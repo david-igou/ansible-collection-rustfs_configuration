@@ -11,4 +11,4 @@
   tasks:
     - name: Reconcile RustFS state
       ansible.builtin.include_role:
-        name: david_igou.rustfs_configuration.rustfs_state
+        name: david_igou.rustfs.rustfs_state

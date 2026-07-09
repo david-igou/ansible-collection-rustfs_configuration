@@ -16,7 +16,7 @@ description:
     membership via the RustFS admin REST API.
 version_added: "2.0.0"
 extends_documentation_fragment:
-  - david_igou.rustfs_configuration.rustfs
+  - david_igou.rustfs.rustfs
 options:
   name:
     description:
@@ -58,7 +58,7 @@ author:
 
 EXAMPLES = r"""
 - name: Create a group with two members
-  david_igou.rustfs_configuration.rustfs_group:
+  david_igou.rustfs.rustfs_group:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -68,7 +68,7 @@ EXAMPLES = r"""
       - bob
 
 - name: Add a member without removing the others
-  david_igou.rustfs_configuration.rustfs_group:
+  david_igou.rustfs.rustfs_group:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -78,7 +78,7 @@ EXAMPLES = r"""
     append: true
 
 - name: Remove the group
-  david_igou.rustfs_configuration.rustfs_group:
+  david_igou.rustfs.rustfs_group:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -115,7 +115,7 @@ group:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
 
-from ansible_collections.david_igou.rustfs_configuration.plugins.module_utils.rustfs import (
+from ansible_collections.david_igou.rustfs.plugins.module_utils.rustfs import (
     RustfsAdminClient,
     RustfsError,
     rustfs_argument_spec,

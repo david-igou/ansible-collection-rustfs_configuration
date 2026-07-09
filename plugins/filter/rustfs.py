@@ -11,7 +11,7 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
-from ansible_collections.david_igou.rustfs_configuration.plugins.module_utils.canonical import (
+from ansible_collections.david_igou.rustfs.plugins.module_utils.canonical import (
     canonical_lifecycle_rules,
     canonical_policy,
 )
