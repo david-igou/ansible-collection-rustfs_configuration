@@ -24,17 +24,16 @@ argument_specs:
       rustfs_state_admin_access_key:
         description:
           - Resolved admin/root access key.
-          - Kept C(no_log) although an access key identifies rather than
-            authenticates — it never needs to appear in output, so it never
-            does.
+          - Secret-adjacent — supply via your secret store. The modules the
+            role calls never print it.
         type: str
         required: true
-        no_log: true
       rustfs_state_admin_secret_key:
-        description: Resolved admin/root secret key.
+        description: >-
+          Resolved admin/root secret key. Secret — supply via your secret
+          store; the modules mark it C(no_log) everywhere it flows.
         type: str
         required: true
-        no_log: true
       rustfs_state_tls_insecure:
         description:
           - Allow insecure TLS (self-signed certificate without a CA bundle).
@@ -101,10 +100,10 @@ argument_specs:
                     list is rejected (the role never deletes) — omit
                     C(lifecycle) to leave rules unmanaged.
                   - To scope a rule to a path, use a top-level C(Prefix) key
-                    (for example C(Prefix) of C(logs/)). RustFS
-                    1.0.0-beta.8 honours ONLY a top-level prefix; a nested
-                    C(Filter) prefix surfaces as persistent drift rather
-                    than being silently masked. An empty prefix (whole
+                    (for example C(Prefix) of C(logs/)) — the shape proven
+                    live. A nested C(Filter) round-trips over the S3 API,
+                    but whether the beta-8 expiry scanner honours it at
+                    execution time is unverified. An empty prefix (whole
                     bucket) may be omitted.
                   - >-
                     Two whole-bucket retention shapes cover most needs.
@@ -148,9 +147,9 @@ argument_specs:
             description: >-
               Resolved secret key. Required when the user may need to be
               created and for the liveness check. Never rewritten for an
-              existing user.
+              existing user. Secret — supply via your secret store; the
+              modules mark it C(no_log) everywhere it flows.
             type: str
-            no_log: true
           access_key:
             description: >-
               Access key to use for the liveness check, as stored in the

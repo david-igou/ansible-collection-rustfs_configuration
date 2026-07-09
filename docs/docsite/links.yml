@@ -1,0 +1,16 @@
+---
+# This will make sure that plugin and module documentation gets Edit on GitHub links
+# that allow users to directly create a PR for this plugin or module in GitHub's UI.
+edit_on_github:
+  repository: david-igou/ansible-collection-rustfs_configuration
+  branch: main
+  path_prefix: ""
+
+extra_links:
+  - description: Report an issue
+    url: https://github.com/david-igou/ansible-collection-rustfs_configuration/issues/new
+
+communication:
+  forums:
+    - topic: Ansible Forum
+      url: https://forum.ansible.com/

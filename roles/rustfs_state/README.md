@@ -55,7 +55,8 @@ Quickstart. Three shapes worth calling out up front:
   `Expiration: {Days: N}` expires **current objects** (non-versioned buckets —
   logs, cluster backups), `NoncurrentVersionExpiration: {NoncurrentDays: N}`
   expires **old versions** (versioned buckets). Scope with a top-level
-  `Prefix:`, not a nested `Filter:` (the server keeps only top-level prefix). If
+  `Prefix:` — the shape proven live (a nested `Filter:` round-trips over the
+  API, but the beta-8 expiry scanner honouring it is unverified). If
   a policy or ILM rule shows a change on *every* run, re-run with `--diff` — it
   prints the exact disagreeing field.
 - **`access_key`** (per user): defaults to the user's `name`; set it only when
