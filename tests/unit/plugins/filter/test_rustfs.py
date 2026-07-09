@@ -147,15 +147,16 @@ def test_ilm_ordering_is_deterministic():
     assert rustfs_canonical_ilm(ILM_RULES) == rustfs_canonical_ilm(list(reversed(ILM_RULES)))
 
 
-def test_ilm_id_casing_fixture():
-    """Pin the export id key casing: rc 0.1.x emits lowercase `id` only.
-
-    If a future rc/server pair starts emitting `ID`, this fixture forces a
-    deliberate decision instead of silent perpetual drift: an uppercase-ID
-    rule is NOT stripped today.
+def test_ilm_id_casing_both_stripped():
+    """Both id casings are comparison-irrelevant: the modules speak the S3
+    API shape (uppercase `ID`), while v1 rc-export specs carried lowercase
+    `id` — canonicalization strips either so both spec generations compare
+    sanely.
     """
-    upper = [{"ID": "abc", "status": "Enabled", "prefix": "x/"}]
-    assert rustfs_canonical_ilm(upper)[0].get("ID") == "abc"
+    upper = [{"ID": "abc", "Status": "Enabled", "Prefix": "x/"}]
+    lower = [{"id": "def", "Status": "Enabled", "Prefix": "x/"}]
+    assert rustfs_canonical_ilm(upper) == rustfs_canonical_ilm(lower)
+    assert "ID" not in rustfs_canonical_ilm(upper)[0]
 
 
 def test_ilm_rule_content_differences_are_detected():

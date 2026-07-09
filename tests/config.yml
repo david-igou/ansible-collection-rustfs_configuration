@@ -1,0 +1,5 @@
+---
+# botocore (the modules' single third-party dependency) requires
+# Python >= 3.8; pin the sanity/import floor accordingly.
+modules:
+  python_requires: ">=3.9"

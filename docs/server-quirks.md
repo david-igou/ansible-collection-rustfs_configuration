@@ -1,79 +1,71 @@
-# RustFS server quirks (empirical, 1.0.0-beta.8 x rc 0.1.24/0.1.25)
+# RustFS server quirks (empirical, 1.0.0-beta.8)
 
 Everything below was established by exercising a live `rustfs/rustfs:1.0.0-beta.8`
-server with the `rc` CLI — not from documentation. It is the knowledge this
+server — first through the `rc` CLI (v1 of this collection), then directly
+against the S3 and admin REST APIs (the 2.x modules). It is the knowledge the
 collection's design is built on; re-verify the marked items after every server
-or rc pin bump (run your drift job right after any live server upgrade).
+image bump (run your drift job right after any live server upgrade).
 
-## Quirks the role codes around
+Since 2.0.0 the collection speaks the APIs directly (botocore for the S3
+plane; SigV4-signed plain-JSON for `/rustfs/admin/v3/*`), so rc-specific
+quirks are gone and some "server" quirks turned out to be rc artifacts —
+kept below under *Overturned* because they explain v1 design fossils.
 
-| Quirk | Consequence in the role |
+## Quirks the modules code around
+
+| Quirk | Where it lands |
 |---|---|
-| `rc mb` / `bucket create` on an EXISTING bucket returns false success | Existence decided by list-first read, never by the create call |
-| IAM policy `Action`/`Resource` arrays return in a different order on every call (stored as sets) | `rustfs_canonical_policy` filter on both sides of every comparison |
-| Storing a policy injects empty boilerplate into the echo: document-level `ID: ""` and, per statement, `Sid: ""` and `Condition: {}` (verified live: a document with none of these exports with all three) | `rustfs_canonical_policy` drops all three empties on both sides, so a from-scratch document (written without them) stays idempotent instead of re-applying `policy:<name>:update` every run |
-| `rc ilm rule import` REQUIRES an `id` on every rule; export always emits ids | Spec rules must carry ids; comparison strips them (`rustfs_canonical_ilm`) |
-| ILM export DROPS empty scoping — a whole-bucket rule imported with `prefix: ""` or `filter: {prefix: ""}` comes back with no prefix/filter at all | `rustfs_canonical_ilm` treats empty prefix/filter as absent on both sides, so a whole-bucket rule stays idempotent |
-| ILM honours ONLY a top-level `prefix`; a nested `filter: {prefix: "x/"}` is silently dropped on export even when non-empty (verified live) | Scope rules with a top-level `prefix:`; a nested filter surfaces as persistent drift (not silently masked) so the mistake is visible |
-| ILM import is a FULL REPLACE of the bucket's rules | Import is the reconcile primitive — no per-rule editing; the spec is the whole ruleset for a managed bucket |
-| `rc admin policy rm` while the policy is attached → HTTP 500 | Deletion is out of scope anyway (report-only) |
-| `rc admin policy attach` REPLACES the user's whole policy set (not additive — attaching B to a user holding A leaves only B) | The role attaches the UNION of current + desired, so extras survive and desired policies converge instead of oscillating |
-| No `rc admin policy detach` subcommand exists in 0.1.x | Extra attachments are reported, never removed by the role; an operator CAN remediate manually by replace-attaching the desired-only set, or allowlist via `rustfs_state_ignore_unmanaged` |
-| `rc admin user add` on an existing access key rotates the secret in place (attachments survive) | The role NEVER re-adds an existing user; rotation is a manual act |
-| `rc alias set` connects to the endpoint and validates credentials — exit 0 (ok), exit 4 (bad access/secret key), exit 3 (endpoint unreachable) — verified live | Doubles as admin credential validation; the exit-4 fast-fail is sound and liveness catches dead keys at alias registration |
-| Admin API (`/rustfs/admin/v3/*`) refuses connections in bursts while the S3 data path stays healthy (observed on live instances) | Every rc call retries, keyed on **exit code 3** (NetworkError) — the sole retryable code |
-| `rc bucket remove --force` is unimplemented client-side (exit 6); versioned buckets are undeletable | Deletion safety is absolute: nothing is ever deleted |
-| rc release tarball v0.1.25 contains a binary self-reporting 0.1.24 (same surface) | Cosmetic; pin is by tarball version + checksum |
-| rc `config.toml` (XDG config) stores alias secrets in plaintext | The role isolates `XDG_CONFIG_HOME` into a run tempdir and shreds it in `always:` |
+| `CreateBucket` on an EXISTING bucket returns false success | `rustfs_bucket` decides existence by read (HeadBucket), never by the create call |
+| IAM policy `Action`/`Resource` arrays return in a different order on every call (stored as sets) | `canonical_policy` (module_utils, shared with the `rustfs_canonical_policy` filter) on both sides of every comparison |
+| Storing a policy injects empty boilerplate into the echo: document-level `ID: ""` and, per statement, `Sid: ""` and `Condition: {}` | `canonical_policy` drops all three empties on both sides, so a from-scratch document (written without them) stays idempotent |
+| `GET /info-canned-policy` answers a metadata WRAPPER `{policy_name, policy: <doc>, create_date, update_date}` (verified live) | `RustfsAdminClient.get_policy` unwraps to the document |
+| A MISSING canned policy answers HTTP **500 InternalError** ("policy does not exist"), not 404 (verified live in molecule) | every admin `get_*` treats a permanent error carrying "does not exist" as not-found; genuine 500s still raise |
+| ILM read DROPS empty scoping — a whole-bucket rule stored with `Prefix: ""` comes back with no Prefix/Filter at all | `canonical_lifecycle_rules` treats empty Prefix/Filter as absent on both sides |
+| ILM put is a FULL REPLACE of the bucket's rules | `rustfs_bucket_lifecycle` reconciles the whole ruleset — no per-rule editing; the spec is the entire configuration |
+| `DELETE /remove-canned-policy` while the policy is attached → HTTP 500 | `rustfs_policy` `state: absent` maps it to a clear detach-first error (the role never deletes anyway) |
+| `PUT /set-user-or-group-policy` REPLACES the whole attachment set (not additive), and **no detach endpoint exists** (rc's detach is a stub returning UnsupportedFeature) | `rustfs_policy_attachment` reads current and writes union (`exclusive: false`, role behavior — extras survive) or the exact list (`exclusive: true` — which IS detach on this server) |
+| `PUT /add-user` on an existing access key rotates the secret in place (attachments survive) | `rustfs_user` never re-PUTs an existing user unless `update_secret: true` |
+| S3 credential validation: `ListBuckets` with a wrong secret → `SignatureDoesNotMatch` / unknown key → `InvalidAccessKeyId`; `AccessDenied` means the pair is VALID but unauthorized | `rustfs_credential_info` separates `authenticated` from `authorized` (rc lumped data-path AccessDenied in with retryable network errors) |
+| Admin API (`/rustfs/admin/v3/*`) refuses connections in bursts while the S3 data path stays healthy | every call retries transport-level failures only (connection refused/reset, timeouts, HTTP 502/503/504), `retries`/`retry_delay` params |
+| Versioned buckets are undeletable | `rustfs_bucket` `state: absent` surfaces a clear error (deletion is out of role scope anyway) |
+| `create-service-account` requires the `expiration` JSON key to be PRESENT (null when unset) | `RustfsAdminClient.create_service_account` always emits it |
+| No service-account update endpoint exists in beta-8 | `rustfs_service_account` never modifies an existing account (documented: remove + recreate) |
 
-## Retry contract (why the role keys on exit code 3)
+## Admin API contract (established from rc v0.1.25 source, verified live)
 
-rc ships a stable exit-code taxonomy (`crates/cli/src/exit_code.rs`): `0`
-Success, `1` GeneralError, `2` UsageError, **`3` NetworkError (the only code
-rc documents as retryable)**, `4` AuthError, `5` NotFound, `6` Conflict, `7`
-UnsupportedFeature, `130` Interrupted. Exit codes are emitted identically in
-human and `--json` mode, so the role retries **only on exit code 3** and
-treats every other non-zero as permanent (fail fast).
+- Base path `/rustfs/admin/v3`; bodies plain JSON, camelCase keys —
+  **no MinIO-style payload encryption**.
+- Auth: AWS SigV4 in headers, service name `s3`, region from config
+  (default `us-east-1`). Required headers: `host`,
+  `x-amz-content-sha256` (hex SHA256 of the exact body bytes; empty-body
+  constant on GET/DELETE), `content-type: application/json` only when a
+  body is present.
+- Error mapping: 404 not-found, 401/403 auth, 409 conflict, 400 bad
+  request — but see the 500-not-found quirk above.
+- `list-users` returns a map `accessKey → {status, policyName, memberOf}`;
+  `policyName` is a comma-joined string.
 
-Do **not** revert to matching the `network_error` string: that token exists
-*only* inside rc's `--json` error envelope (`crates/cli/src/output/formatter.rs`
-maps `NetworkError -> ("network_error", true)`; also surfaced as
-`details.type` / `details.retryable`). The role's mutation and `alias set`
-calls run without `--json`, whose human error line is `Network error: {msg}`
-(capital N, space, no underscore) — so a substring test silently never
-matched on the write path, and those calls effectively never retried.
-Verified live against `1.0.0-beta.8`: an unreachable/transient endpoint
-returns exit 3; connection-refused/reset map to exit 5; bad credentials to
-exit 4.
+## Overturned in 2.0.0 (rc artifacts, not server behavior)
 
-One asymmetry to know: the exit-4 (AuthError) fast-path applies to
-`alias set`/admin authentication. An **S3 data-path** `AccessDenied` — e.g. a
-liveness `ls` against a bucket the user's policy does not grant — comes back
-as exit **3** (rc's `--json` envelope shows `type: network_error`,
-`retryable: true`). So a live-but-under-privileged credential is *retried*
-through the budget and then surfaces as a liveness failure, not an immediate
-auth error. This is why liveness proves authentication only; verify a
-credential's authorization scope out-of-band (probe it with your own `rc`
-alias).
+| v1 belief | What direct-API testing showed |
+|---|---|
+| "ILM honours ONLY a top-level `prefix`; a nested `filter` is silently dropped on export" | A `Filter: {Prefix: ...}` **survives a direct S3 put/get round-trip** (verified live). The drop was in rc's JSON serialization. Whether the expiry scanner honours Filter at execution time remains unverified — top-level `Prefix` is still the recommended shape. |
+| "`ilm rule import` REQUIRES an `id` on every rule" | rc-level validation. The S3 put accepts id-less rules; `rustfs_bucket_lifecycle` generates deterministic content-derived IDs anyway so comparisons and server state stay stable. |
+| "clear-all lifecycle semantics unverified" | `DeleteBucketLifecycle` works (verified live) — `rustfs_bucket_lifecycle` `state: absent` has defined semantics. The ROLE still rejects `rules: []` (deletion safety). |
+| rc exit-code taxonomy (3 = the only retryable) as the retry key | Replaced by HTTP-level classification in module_utils; no string/exit-code matching anywhere. |
 
-## Known unknowns (re-verify on every pin bump)
+## Known unknowns (re-verify on every server pin bump)
 
-- **ILM id regeneration on import**: so far the server has preserved provided
-  rule ids on import. If a future build regenerates them, drift comparison is
-  unaffected (ids are stripped), but the unit fixture in
-  `tests/unit/plugins/filter/test_rustfs.py` pins the export id key casing
-  (lowercase `id`) — an uppercase `ID` would need a deliberate filter change.
-- **`ilm rule import` with an empty rule list** (clear-all semantics):
-  unverified — the role rejects `rules: []` by assert; omit the `lifecycle`
-  key to leave rules unmanaged.
+- **404-vs-500 not-found shapes**: which admin endpoints answer 404 vs 500
+  "does not exist" is empirical per endpoint on beta-8. The `_is_not_found`
+  helper covers both; a future server normalizing to 404 changes nothing.
+- **`/info-canned-policy` envelope**: the `{policy_name, policy, ...}`
+  wrapper is pinned by unit fixture; a future server returning the bare
+  document also works (the unwrap is conditional).
+- **ILM Filter honoured at scan time?** Round-trips cleanly (above), but
+  whether the expiry scanner applies a nested Filter is untested — scope
+  with top-level `Prefix` until verified.
 - **Buckets are directories under `/data`** (single-node layout): the molecule
   verify uses `podman exec rustfs-server ls /data` as an independent
   server-side check. This coupling is the FIRST suspect if a server image
   bump breaks verify.
-- **Verb spellings shipped in v1** (exactly what the live-validated
-  automation used, mixed by design): deprecated aliases `rc ls` (bucket
-  enumeration + liveness object listing) and `rc ilm rule export/import`;
-  canonical `rc bucket create` and `rc bucket version info/enable/suspend`;
-  `rc admin ...` (only form). Unifying on canonical verbs (`bucket list`,
-  `bucket lifecycle rule`, `object list`) is a fixture-gated patch — pin
-  per-command JSON output first, then migrate, then re-verify live no-op.

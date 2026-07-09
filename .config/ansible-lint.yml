@@ -7,10 +7,17 @@ profile: production
 # provisioner collection, which is a molecule-only test dependency
 # (extensions/molecule/requirements-test.yml) and is not part of the lint
 # install set — so lint cannot resolve the import and errors. They contain
-# nothing else to lint; exclude them. offline: true keeps lint from
-# attempting to fetch collections at run time (matches the other
-# david_igou collections).
-offline: true
+# nothing else to lint; exclude them.
+#
+# offline is deliberately OFF (a break from the other david_igou
+# collections): the role's tasks call this collection's own rustfs_*
+# modules by FQCN, and lint's syntax-check can only resolve those after
+# ansible-lint self-installs the collection under test into the project
+# .ansible/ cache — which offline mode skips (leaving .ansible/collections
+# empty and every module call an unknown-module error). Nothing external
+# is fetched either way: the collection has no galaxy dependencies and the
+# molecule test requirements are not part of lint's install set.
+offline: false
 
 exclude_paths:
   - .github/

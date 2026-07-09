@@ -14,8 +14,10 @@
 #      allowlist can ever silence it) are REPORTED, never deleted/detached;
 #      fail_on_unmanaged escalates both; ignore_unmanaged silences both;
 #   7. dead credentials fail the play (liveness path);
-#   8. retry classification — exit 4 (bad creds) fast-fails, exit 3
-#      (unreachable) is retried then surfaced as a non-credential error.
+#   8. error classification — bad admin credentials fast-fail at the
+#      credential assert (auth errors never retry), an unreachable
+#      endpoint is retried (network class) then surfaces as the probe
+#      task's own failure, not as a credential failure.
 - name: Verify
   hosts: stubs
   gather_facts: false
@@ -265,17 +267,14 @@
               - "'rustfs-molecule:user:app-user' in rustfs_state_liveness_failures"
             fail_msg: "role failed for an unexpected reason: {{ ansible_failed_task.name | default('?') }}"
 
-    # ---- 8. retry classification: exit-3 is retryable, exit-4 fast-fails ----
-    # The role keys retries on rc exit code 3 (NetworkError) and fast-fails
-    # every other non-zero. These two paths are what the retry change turns
-    # on, and both are deterministic. (We deliberately do NOT assert
-    # "retry-then-succeed" against an injected single-connection drop: the
-    # AWS S3 SDK inside rc transparently retries a lone transient drop below
-    # rc's exit code, so such a fault never reaches the Ansible retry loop —
-    # a test built on it would pass without exercising the predicate.)
+    # ---- 8. error classification: network retries, auth fast-fails ----
+    # The modules retry ONLY transport-level failures and fast-fail every
+    # permanent class (auth/not-found/conflict). These two paths are what
+    # that classification turns on, and both are deterministic.
 
-    # 8a — a reachable endpoint with a WRONG admin secret returns exit 4;
-    # the role must fast-fail at the credential assert, never retrying.
+    # 8a — a reachable endpoint with a WRONG admin secret is an auth error
+    # (SignatureDoesNotMatch); the probe module reports authenticated=false
+    # without retrying and the role must fail at the credential assert.
     - name: Exit-4 path — bad admin credentials fast-fail without retrying
       block:
         - name: Run role with a wrong admin secret against the live server
@@ -299,15 +298,15 @@
             that:
               - ansible_failed_task.name == 'Fail on rejected admin credentials'
             fail_msg: >-
-              expected the exit-4 credential assert, got:
+              expected the rejected-credentials assert, got:
               {{ ansible_failed_task.name | default('?') }}
 
-    # 8b — an unreachable endpoint returns exit 3 (NetworkError); the role
-    # must classify it as retryable (consume its retry budget) and then
-    # surface it as a generic registration error, NOT as a credential
-    # failure. Reaching the "any other" assert (not the exit-4 one) proves
-    # exit 3 went down the retryable branch.
-    - name: Exit-3 path — an unreachable endpoint is retried, then surfaced as non-auth
+    # 8b — an unreachable endpoint is a network-class error; the probe
+    # module consumes its retry budget and then fails ITSELF (a connection
+    # error, not a credential verdict). Reaching the probe task's own
+    # failure — not the credential assert — proves the network class went
+    # down the retryable branch.
+    - name: Network path — an unreachable endpoint is retried, then surfaced as non-auth
       block:
         - name: Run role against an unreachable endpoint with a small retry budget
           ansible.builtin.include_role:
@@ -320,17 +319,17 @@
             rustfs_state_retries: 2
             rustfs_state_retry_delay: 1
 
-        - name: Unreachable — the registration assert must have failed above
+        - name: Unreachable — the admin probe must have failed above
           ansible.builtin.fail:
             msg: an unreachable endpoint did not fail the run
 
       rescue:
-        - name: Assert exit-3 was retried and surfaced as a non-credential error
+        - name: Assert the network error was retried and surfaced as a non-credential error
           ansible.builtin.assert:
             that:
-              - ansible_failed_task.name == 'Fail on any other alias registration error'
+              - ansible_failed_task.name == 'Validate admin credentials'
             fail_msg: >-
-              expected the generic registration assert (exit 3 retried),
+              expected the admin probe's own network failure (retried),
               got: {{ ansible_failed_task.name | default('?') }}
 
     - name: Remove the side-effect rc workdir

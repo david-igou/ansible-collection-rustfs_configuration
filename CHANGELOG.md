@@ -1,5 +1,63 @@
 # Changelog
 
+## v2.0.0 (unreleased)
+
+Full refactor: native Ansible modules replace the rc CLI wrappers
+(spec/design: GitHub issue #3). The modules speak the two management
+planes directly from Python — the S3 API through botocore, the RustFS
+admin REST API (`/rustfs/admin/v3/*`) with SigV4-signed plain-JSON
+requests. No binary is downloaded or shelled out to anywhere.
+
+New content:
+
+- Modules (state): `rustfs_bucket`, `rustfs_bucket_lifecycle`,
+  `rustfs_bucket_quota`, `rustfs_policy`, `rustfs_user`, `rustfs_group`,
+  `rustfs_service_account`, `rustfs_policy_attachment` — all with native
+  check-mode and `--diff` support, read-first reconcile, canonical
+  comparison, and transport-only retries.
+- Modules (info): `rustfs_bucket_info`, `rustfs_policy_info`,
+  `rustfs_user_info`, `rustfs_group_info`, `rustfs_service_account_info`,
+  `rustfs_credential_info` (liveness — distinguishes authentication from
+  authorization, which rc's exit codes lumped together).
+- `module_utils/rustfs.py` (shared clients, error taxonomy, retry) and
+  `module_utils/canonical.py` (single source of canonicalization, shared
+  with the filter plugins).
+- Action group `david_igou.rustfs_configuration.rustfs` for
+  `module_defaults`; `RUSTFS_*` environment fallbacks for every
+  connection option.
+- Groups, service accounts, and quotas are newly manageable (module-level;
+  the role's managed surface is unchanged).
+
+Breaking changes (role spec):
+
+- rc pin vars removed: `rustfs_state_rc_version`, `_checksum`, `_arch`,
+  `_url`, `_binary`; `rustfs_state_alias` removed (no alias concept, no
+  charset asserts).
+- `lifecycle.rules` moves from the rc-export JSON shape (lowercase `id`,
+  `prefix`, `expiration.days`) to the standard S3 API shape (`ID`
+  optional — deterministic IDs are generated — `Prefix`,
+  `Expiration.Days`, PascalCase). The `rustfs_canonical_ilm` filter
+  accepts both shapes.
+- New runtime dependency **botocore** on the python executing the modules
+  (for connection-local stubs: the controller/EE). The rc binary
+  download/bake is gone.
+- New `rustfs_state_ca_bundle` for private-CA endpoints.
+
+Unchanged (stable API): report strings, `set_stats` names, gate order and
+semantics, deletion safety, and the rest of the `rustfs_state_*` spec.
+
+Server behavior discovered/overturned while validating against a live
+1.0.0-beta.8 (docs/server-quirks.md has the full matrix):
+
+- A missing canned policy answers HTTP 500 "policy does not exist" (not
+  404); admin readers normalize this to not-found.
+- `GET /info-canned-policy` wraps the document in
+  `{policy_name, policy, create_date, update_date}`; the client unwraps.
+- Overturned: the "top-level prefix only" ILM limitation and the
+  "rules must carry an id" requirement were rc artifacts — a nested
+  `Filter.Prefix` round-trips cleanly over the direct S3 API and id-less
+  rules are accepted. `DeleteBucketLifecycle` (clear-all) verified working.
+
 ## v1.0.0 (unreleased)
 
 Initial release.

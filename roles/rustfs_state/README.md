@@ -5,13 +5,16 @@ versioning, lifecycle (ILM) rules, users, policy attachments — against a
 declarative per-host spec, verify that the provided credentials actually
 authenticate, and (in check mode) fail on any drift.
 
+All server access goes through this collection's `rustfs_*` modules
+(direct S3 + admin-API calls from Python) — no CLI binary, no alias
+store, no tempdir scaffolding.
+
 ## One host = one instance
 
 The role reconciles **the inventory host it runs on**: a connection-local
 stub named after the instance. `inventory_hostname` prefixes every report
-entry; `rustfs_state_alias` (default: the hostname) is the rc alias. The
-play fans out across instances the way Ansible naturally does — there is
-no instances list.
+entry. The play fans out across instances the way Ansible naturally does —
+there is no instances list.
 
 ## The role is a function
 
@@ -30,36 +33,38 @@ host_vars, where they are just values of this schema.
 | `rustfs_state_policies` | `[]` | Managed IAM policies (`{name, document}`) |
 | `rustfs_state_buckets` | `[]` | Managed buckets (`{name, versioning?, lifecycle?}`) |
 | `rustfs_state_users` | `[]` | Managed users (`{name, policies, secret_key?, access_key?, liveness_bucket?}`) |
-| `rustfs_state_alias` | `inventory_hostname` | rc alias (charset-asserted: `^[a-z0-9][a-z0-9-]*$`) |
-| `rustfs_state_tls_insecure` | `false` | Allow insecure TLS on alias registrations (TLS-only; no-op for `http://`) |
-| `rustfs_state_rc_version` / `_checksum` / `_arch` / `_url` | pinned | rc toolchain pin (bump version+checksum together) |
-| `rustfs_state_rc_binary` | `""` | Pre-installed rc path (skips download) |
-| `rustfs_state_retries` / `rustfs_state_retry_delay` | `8` / `3` | Retry policy (network-classified errors only) |
+| `rustfs_state_tls_insecure` | `false` | Allow insecure TLS (TLS-only; no-op for `http://`) |
+| `rustfs_state_ca_bundle` | `""` | CA bundle path for private-CA endpoints |
+| `rustfs_state_retries` / `rustfs_state_retry_delay` | `8` / `3` | Retry policy (transport-level failures only) |
 | `rustfs_state_builtin_policies` | server builtins | Never reported as unmanaged |
 | `rustfs_state_fail_on_drift` | `ansible_check_mode` | Fail on (pending) changes — the drift-job mechanism |
 | `rustfs_state_fail_on_unmanaged` | `false` | Escalate unmanaged resources to a failure |
 | `rustfs_state_ignore_unmanaged` | `[]` | `<kind>:<name>` allowlist for the unmanaged report/gate |
 
-Spec details — worked `document` / `lifecycle.rules` examples, the ILM id
-requirement, and liveness semantics — are in `meta/argument_specs.yml` and the
-collection README Quickstart. Two shapes worth calling out up front:
+Spec details — worked `document` / `lifecycle.rules` examples and liveness
+semantics — are in `meta/argument_specs.yml` and the collection README
+Quickstart. Three shapes worth calling out up front:
 
 - **Policy `document`**: write it plainly (`Version` + `Statement` list); no
   `ID`/`Sid`/`Condition` boilerplate needed — the server adds those empties and
-  the canonical filter absorbs them, so a from-scratch policy stays idempotent.
-- **`lifecycle.rules`**: the rules **array only** (not the `{"rules": [...]}`
-  envelope `rc ilm rule export` prints). Two whole-bucket retention shapes:
-  `expiration: {days: N}` expires **current objects** (non-versioned buckets —
-  logs, cluster backups), `noncurrentVersionExpiration: {noncurrentDays: N}`
+  the canonical comparison absorbs them, so a from-scratch policy stays
+  idempotent.
+- **`lifecycle.rules`**: the rules **array only**, in the standard S3 API
+  shape (PascalCase — what every S3 tool documents). An `ID` is optional
+  (deterministic IDs are generated). Two whole-bucket retention shapes:
+  `Expiration: {Days: N}` expires **current objects** (non-versioned buckets —
+  logs, cluster backups), `NoncurrentVersionExpiration: {NoncurrentDays: N}`
   expires **old versions** (versioned buckets). Scope with a top-level
-  `prefix:`, not a nested `filter:` (the server keeps only top-level prefix). If
+  `Prefix:`, not a nested `Filter:` (the server keeps only top-level prefix). If
   a policy or ILM rule shows a change on *every* run, re-run with `--diff` — it
   prints the exact disagreeing field.
 - **`access_key`** (per user): defaults to the user's `name`; set it only when
   the stored access key differs from the name. A mismatch between it and the
   identity the secret actually authenticates as is exactly what liveness
-  catches — liveness proves *authentication*, not *authorization scope* (to
-  check the latter, probe the account's creds with your own `rc` alias).
+  catches — liveness proves *authentication* plus listability of the one
+  liveness bucket, not full authorization scope (to audit the latter, probe
+  the account's creds against each verb with any S3 client, or use the
+  `rustfs_credential_info` module per bucket).
 
 ## Outputs (stable API)
 
@@ -79,24 +84,29 @@ collection README Quickstart. Two shapes worth calling out up front:
 
 ## Behavioral invariants
 
-1. Read-first reconcile; canonical comparison via the collection filters.
+1. Read-first reconcile; canonical comparison inside the modules (shared
+   with the collection filters via module_utils).
 2. Deletion safety: unmanaged resources are reported (optionally gated),
-   never deleted; extra attachments report-only (no detach in rc 0.1.x).
-   Policy attach is a full REPLACE server-side, so the role always sends
+   never deleted; extra attachments report-only (the role never uses the
+   attachment module's `exclusive` mode). Policy attach is a full REPLACE
+   server-side, so the attachment module always sends
    `union(existing, desired)` — desired policies converge, out-of-band
    extras survive and stay visible as `extra-attachment` reports.
 3. Secrets: never looked up, never generated, never rewritten for an
-   existing user (re-`user add` would rotate the secret); `no_log`
-   everywhere secrets flow (including `user add`, which echoes the secret).
+   existing user (the `rustfs_user` module rotates only with an explicit
+   `update_secret` opt-in, which the role never sets); `no_log` everywhere
+   secrets flow.
 4. Liveness: per user with `liveness_bucket` + `secret_key`, the provided
-   pair lists the bucket; all failures are collected, the full report is
-   emitted, then the play fails. Check mode skips users pending creation.
-   Gate order: liveness, then unmanaged (opt-in), then drift.
-5. Check-mode correctness: reads run under `--check`; mutations never do.
-6. Classified retries: `network_error` retries, everything else fails
-   fast; rejected admin credentials (`alias set` exit 4) fail immediately
-   with a clear, secret-free message.
-7. rc hygiene: tempdir-isolated `XDG_CONFIG_HOME` (rc stores alias secrets
-   in plaintext), shredded in `always:`.
+   pair authenticates and lists the bucket (`rustfs_credential_info`); all
+   failures are collected, the full report is emitted, then the play
+   fails. Check mode skips users pending creation. Gate order: liveness,
+   then unmanaged (opt-in), then drift.
+5. Check-mode correctness: the modules support check mode natively — reads
+   run under `--check`; mutations never do.
+6. Classified retries: transport-level failures (connection refused/reset,
+   timeouts, HTTP 502/503/504) retry, everything else fails fast; rejected
+   admin credentials fail immediately with a clear, secret-free message.
+   Unlike the old rc CLI path, a data-path `AccessDenied` is now a proper
+   auth verdict, not a retried "network error".
 
 Server quirks these come from: `../../docs/server-quirks.md`.
