@@ -1,0 +1,18 @@
+---
+# Publish to Ansible Galaxy when a GitHub release is published (mirrors
+# the other david_igou collections). One-time prerequisites (manual):
+#   1. A `release` environment on the repo.
+#   2. The ANSIBLE_GALAXY_API_KEY secret in that environment.
+name: Release david_igou.rustfs
+
+on: # yamllint disable-line rule:truthy
+  release:
+    types: [published]
+
+jobs:
+  release_galaxy:
+    uses: ansible/ansible-content-actions/.github/workflows/release_galaxy.yaml@7dc7e15a53c2ae8bd092461e53dafd6627e34ac6 # v1.1.0
+    with:
+      environment: release
+    secrets:
+      ansible_galaxy_api_key: ${{ secrets.ANSIBLE_GALAXY_API_KEY }}
