@@ -1,0 +1,264 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta content="2.24.0" name="antsibull-docs" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>David_Igou.Rustfs &mdash; David_Igou.Rustfs Collection  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=41de9001" />
+      <link rel="stylesheet" type="text/css" href="_static/css/ansible.css?v=b54c304f" />
+      <link rel="stylesheet" type="text/css" href="_static/antsibull-minimal.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/rtd-ethical-ads.css?v=289b023e" />
+
+  
+    <link rel="shortcut icon" href="_static/images/Ansible-Mark-RGB_Black.png"/>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=7f41d439"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting started" href="docsite/guide.html" /><!-- extra head elements for Ansible beyond RTD Sphinx Theme -->
+
+
+
+
+</head>
+
+<body class="wy-body-for-nav"><!-- extra body elements for Ansible beyond RTD Sphinx Theme -->
+
+<div class="DocSite-globalNav ansibleNav">
+  <ul>
+    <li><a href="https://www.ansible.com/blog" target="_blank">Blog</a></li>
+    <li><a href="https://forum.ansible.com/" target="_blank">Ansible community forum</a></li>
+    <li><a href="https://docs.ansible.com/" target="_blank">Documentation</a></li>
+  </ul>
+</div>
+
+<a class="DocSite-nav" href="https://david-igou.github.io/ansible-collection-rustfs_configuration/branch/main/" style="padding-bottom: 30px;">
+
+  <img class="DocSiteNav-logo"
+    src="_static/images/Ansible-Mark-RGB_White.png"
+    alt="Ansible Logo">
+  <div class="DocSiteNav-title">David_Igou.Rustfs Collection Docs</div>
+</a>
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            David_Igou.Rustfs Collection
+          </a><!--- Based on https://github.com/rtfd/sphinx_rtd_theme/pull/438/files -->
+
+<div class="version">
+  
+    
+  
+</div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <label class="sr-only" for="q">Search docs:</label>
+    <input type="text" class="st-default-search-input" id="q" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+  
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="docsite/guide.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="docsite/drift_detection.html">Drift detection and reporting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="docsite/server_behavior.html">Server behavior, errors, and retries</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="docsite/rustfs_state_role.html">david_igou.rustfs.rustfs_state role</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="bucket_module.html">david_igou.rustfs.bucket module – Manage buckets on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bucket_info_module.html">david_igou.rustfs.bucket_info module – Gather information about buckets on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bucket_lifecycle_module.html">david_igou.rustfs.bucket_lifecycle module – Manage the lifecycle (ILM) configuration of a RustFS bucket</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bucket_quota_module.html">david_igou.rustfs.bucket_quota module – Manage the hard quota of a RustFS bucket</a></li>
+<li class="toctree-l1"><a class="reference internal" href="credential_info_module.html">david_igou.rustfs.credential_info module – Verify a credential pair against a RustFS server (liveness)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="group_module.html">david_igou.rustfs.group module – Manage IAM groups on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="group_info_module.html">david_igou.rustfs.group_info module – Gather information about IAM groups on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="policy_module.html">david_igou.rustfs.policy module – Manage canned IAM policies on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="policy_attachment_module.html">david_igou.rustfs.policy_attachment module – Manage the policies attached to a RustFS user or group</a></li>
+<li class="toctree-l1"><a class="reference internal" href="policy_info_module.html">david_igou.rustfs.policy_info module – Gather information about canned IAM policies on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="service_account_module.html">david_igou.rustfs.service_account module – Manage service accounts on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="service_account_info_module.html">david_igou.rustfs.service_account_info module – Gather information about service accounts on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_module.html">david_igou.rustfs.user module – Manage IAM users on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_info_module.html">david_igou.rustfs.user_info module – Gather information about IAM users on a RustFS server</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="canonical_ilm_filter.html">david_igou.rustfs.canonical_ilm filter – Canonicalize a RustFS ILM rule list for comparison</a></li>
+<li class="toctree-l1"><a class="reference internal" href="canonical_policy_filter.html">david_igou.rustfs.canonical_policy filter – Canonicalize a RustFS IAM policy document for comparison</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="rustfs_state_role.html">david_igou.rustfs.rustfs_state role – Reconcile one RustFS instance’s in-server state against a declarative spec</a></li>
+</ul>
+<!-- extra nav elements for Ansible beyond RTD Sphinx Theme -->
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">David_Igou.Rustfs Collection</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">David_Igou.Rustfs</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+
+  
+           <div itemprop="articleBody">
+             
+  <section id="david-igou-rustfs">
+<span id="plugins-in-david-igou-rustfs"></span><h1>David_Igou.Rustfs<a class="headerlink" href="#david-igou-rustfs" title="Link to this heading"></a></h1>
+<p>Collection version 2.0.0</p>
+<nav class="contents local" id="contents">
+<ul class="simple">
+<li><p><a class="reference internal" href="#description" id="id1">Description</a></p></li>
+<li><p><a class="reference internal" href="#communication" id="id2">Communication</a></p></li>
+<li><p><a class="reference internal" href="#general" id="id3">General</a></p></li>
+<li><p><a class="reference internal" href="#roles" id="id4">Roles</a></p></li>
+<li><p><a class="reference internal" href="#plugin-index" id="id5">Plugin Index</a></p></li>
+<li><p><a class="reference internal" href="#role-index" id="id6">Role Index</a></p></li>
+</ul>
+</nav>
+<section id="description">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Description</a><a class="headerlink" href="#description" title="Link to this heading"></a></h2>
+<p>Declarative in-server state management for RustFS object-storage servers via native modules speaking the S3 and admin APIs directly: buckets, versioning, lifecycle, quota, IAM policies/users/groups/service accounts, policy attachments, and credential liveness verification, with check mode as drift detection.</p>
+<p><strong>Author:</strong></p>
+<ul class="simple">
+<li><p>David Igou &lt;<a class="reference external" href="mailto:igou&#46;david&#37;&#52;&#48;gmail&#46;com">igou<span>&#46;</span>david<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</p></li>
+</ul>
+<p><strong>Supported ansible-core versions:</strong></p>
+<ul class="simple">
+<li><p>2.16.0 or newer</p></li>
+</ul>
+<ul class="ansible-links">
+<li><span><a aria-role="button" class="ansible-link reference external" href="https://github.com/david-igou/ansible-collection-rustfs_configuration/issues" rel="noopener external" target="_blank">Issue Tracker</a></span></li>
+<li><span><a aria-role="button" class="ansible-link reference external" href="https://github.com/david-igou/ansible-collection-rustfs_configuration" rel="noopener external" target="_blank">Repository (Sources)</a></span></li>
+<li><span><a aria-role="button" class="ansible-link reference external" href="https://github.com/david-igou/ansible-collection-rustfs_configuration/issues/new" rel="noopener external" target="_blank">Report an issue</a></span></li>
+</ul>
+</section>
+<section id="communication">
+<span id="communication-for-david-igou-rustfs"></span><h2><a class="toc-backref" href="#id2" role="doc-backlink">Communication</a><a class="headerlink" href="#communication" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Forum: <a class="reference external" href="https://forum.ansible.com/">Ansible Forum</a>.</p></li>
+</ul>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+<section id="general">
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">General</a><a class="headerlink" href="#general" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="docsite/guide.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="docsite/drift_detection.html">Drift detection and reporting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="docsite/server_behavior.html">Server behavior, errors, and retries</a></li>
+</ul>
+</div>
+</section>
+<section id="roles">
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">Roles</a><a class="headerlink" href="#roles" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="docsite/rustfs_state_role.html">david_igou.rustfs.rustfs_state role</a></li>
+</ul>
+</div>
+</section>
+<section id="plugin-index">
+<span id="plugin-index-for-david-igou-rustfs"></span><h2><a class="toc-backref" href="#id5" role="doc-backlink">Plugin Index</a><a class="headerlink" href="#plugin-index" title="Link to this heading"></a></h2>
+<p>These are the plugins in the david_igou.rustfs collection:</p>
+<section id="modules">
+<span id="module-plugins-in-david-igou-rustfs"></span><h3>Modules<a class="headerlink" href="#modules" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="bucket_module.html#ansible-collections-david-igou-rustfs-bucket-module"><span class="std std-ref">bucket module</span></a> – Manage buckets on a RustFS server</p></li>
+<li><p><a class="reference internal" href="bucket_info_module.html#ansible-collections-david-igou-rustfs-bucket-info-module"><span class="std std-ref">bucket_info module</span></a> – Gather information about buckets on a RustFS server</p></li>
+<li><p><a class="reference internal" href="bucket_lifecycle_module.html#ansible-collections-david-igou-rustfs-bucket-lifecycle-module"><span class="std std-ref">bucket_lifecycle module</span></a> – Manage the lifecycle (ILM) configuration of a RustFS bucket</p></li>
+<li><p><a class="reference internal" href="bucket_quota_module.html#ansible-collections-david-igou-rustfs-bucket-quota-module"><span class="std std-ref">bucket_quota module</span></a> – Manage the hard quota of a RustFS bucket</p></li>
+<li><p><a class="reference internal" href="credential_info_module.html#ansible-collections-david-igou-rustfs-credential-info-module"><span class="std std-ref">credential_info module</span></a> – Verify a credential pair against a RustFS server (liveness)</p></li>
+<li><p><a class="reference internal" href="group_module.html#ansible-collections-david-igou-rustfs-group-module"><span class="std std-ref">group module</span></a> – Manage IAM groups on a RustFS server</p></li>
+<li><p><a class="reference internal" href="group_info_module.html#ansible-collections-david-igou-rustfs-group-info-module"><span class="std std-ref">group_info module</span></a> – Gather information about IAM groups on a RustFS server</p></li>
+<li><p><a class="reference internal" href="policy_module.html#ansible-collections-david-igou-rustfs-policy-module"><span class="std std-ref">policy module</span></a> – Manage canned IAM policies on a RustFS server</p></li>
+<li><p><a class="reference internal" href="policy_attachment_module.html#ansible-collections-david-igou-rustfs-policy-attachment-module"><span class="std std-ref">policy_attachment module</span></a> – Manage the policies attached to a RustFS user or group</p></li>
+<li><p><a class="reference internal" href="policy_info_module.html#ansible-collections-david-igou-rustfs-policy-info-module"><span class="std std-ref">policy_info module</span></a> – Gather information about canned IAM policies on a RustFS server</p></li>
+<li><p><a class="reference internal" href="service_account_module.html#ansible-collections-david-igou-rustfs-service-account-module"><span class="std std-ref">service_account module</span></a> – Manage service accounts on a RustFS server</p></li>
+<li><p><a class="reference internal" href="service_account_info_module.html#ansible-collections-david-igou-rustfs-service-account-info-module"><span class="std std-ref">service_account_info module</span></a> – Gather information about service accounts on a RustFS server</p></li>
+<li><p><a class="reference internal" href="user_module.html#ansible-collections-david-igou-rustfs-user-module"><span class="std std-ref">user module</span></a> – Manage IAM users on a RustFS server</p></li>
+<li><p><a class="reference internal" href="user_info_module.html#ansible-collections-david-igou-rustfs-user-info-module"><span class="std std-ref">user_info module</span></a> – Gather information about IAM users on a RustFS server</p></li>
+</ul>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+<section id="filter-plugins">
+<span id="filter-plugins-in-david-igou-rustfs"></span><h3>Filter Plugins<a class="headerlink" href="#filter-plugins" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="canonical_ilm_filter.html#ansible-collections-david-igou-rustfs-canonical-ilm-filter"><span class="std std-ref">canonical_ilm filter</span></a> – Canonicalize a RustFS ILM rule list for comparison</p></li>
+<li><p><a class="reference internal" href="canonical_policy_filter.html#ansible-collections-david-igou-rustfs-canonical-policy-filter"><span class="std std-ref">canonical_policy filter</span></a> – Canonicalize a RustFS IAM policy document for comparison</p></li>
+</ul>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+</section>
+<section id="role-index">
+<span id="role-plugins-in-david-igou-rustfs"></span><h2><a class="toc-backref" href="#id6" role="doc-backlink">Role Index</a><a class="headerlink" href="#role-index" title="Link to this heading"></a></h2>
+<p>These are the roles in the david_igou.rustfs collection:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="rustfs_state_role.html#ansible-collections-david-igou-rustfs-rustfs-state-role"><span class="std std-ref">rustfs_state role</span></a> – Reconcile one RustFS instance’s in-server state against a declarative spec</p></li>
+</ul>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          
+
+<footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="docsite/guide.html" class="btn btn-neutral float-right" title="Getting started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright david-igou.rustfs contributors.</p>
+  </div>
+
+  
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script><!-- extra footer elements for Ansible beyond RTD Sphinx Theme -->
+
+</body>
+</html>
