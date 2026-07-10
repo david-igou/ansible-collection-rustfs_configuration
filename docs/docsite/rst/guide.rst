@@ -34,11 +34,20 @@ There are two ways to use the collection, and they compose:
 The setup
 ---------
 
-Install the collection:
+Install the collection — as a git source tracking ``main`` (there is no
+Galaxy release or git tag yet):
+
+.. code-block:: yaml
+
+   # requirements.yml
+   collections:
+     - name: https://github.com/david-igou/ansible-collection-rustfs.git
+       type: git
+       version: main
 
 .. code-block:: bash
 
-   ansible-galaxy collection install david_igou.rustfs
+   ansible-galaxy collection install -r requirements.yml
 
 One inventory host per RustFS instance, as a connection-local stub —
 the play fans out across instances the way Ansible naturally does:
