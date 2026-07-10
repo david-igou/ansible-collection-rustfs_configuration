@@ -202,3 +202,13 @@ def test_ilm_current_object_expiration_is_preserved():
     # and it is genuinely different from a noncurrent-version rule
     noncurrent = [{"id": "x", "status": "Enabled", "noncurrentVersionExpiration": {"noncurrentDays": 30}}]
     assert canonical_ilm(desired) != canonical_ilm(noncurrent)
+
+
+def test_filtermodule_exposes_expected_names():
+    """The only behavior the filter layer adds over module_utils is the
+    public name mapping - pin it."""
+    from ansible_collections.david_igou.rustfs.plugins.filter.rustfs import FilterModule
+
+    filters = FilterModule().filters()
+    assert set(filters) == {"canonical_policy", "canonical_ilm"}
+    assert all(callable(f) for f in filters.values())

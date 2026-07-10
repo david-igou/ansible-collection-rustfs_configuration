@@ -27,9 +27,10 @@ kept below under *Overturned* because they explain v1 design fossils.
 | `PUT /add-user` on an existing access key rotates the secret in place (attachments survive) | `user` never re-PUTs an existing user unless `update_secret: true` |
 | S3 credential validation: `ListBuckets` with a wrong secret → `SignatureDoesNotMatch` / unknown key → `InvalidAccessKeyId`; `AccessDenied` means the pair is VALID but unauthorized | `credential_info` separates `authenticated` from `authorized` (rc lumped data-path AccessDenied in with retryable network errors) |
 | Admin API (`/rustfs/admin/v3/*`) refuses connections in bursts while the S3 data path stays healthy | every call retries transport-level failures only (connection refused/reset, timeouts, HTTP 502/503/504), `retries`/`retry_delay` params |
-| Versioned buckets are undeletable | `bucket` `state: absent` surfaces a clear error (deletion is out of role scope anyway) |
 | `create-service-account` requires the `expiration` JSON key to be PRESENT (null when unset) | `RustfsAdminClient.create_service_account` always emits it |
 | No service-account update endpoint exists in beta-8 | `service_account` never modifies an existing account (documented: remove + recreate) |
+| A request signed by a DISABLED access key answers `InvalidRequest`/`ErrAccessKeyDisabled` (found live) | `credential_info` reports it as a verdict — `authenticated: true`, `usable: false`, detail carries the code — instead of erroring |
+| **Group admin API is stubbed server-side**: `POST /groups` answers HTTP 501 NotImplemented on beta-8 (found live by the molecule `modules` scenario) even though the endpoints exist in the rc client | `group`/`group_info` work against a future server build; the molecule group walk tolerates exactly this failure and re-arms automatically when a build implements groups |
 
 ## Admin API contract (established from rc v0.1.25 source, verified live)
 
@@ -51,6 +52,7 @@ kept below under *Overturned* because they explain v1 design fossils.
 |---|---|
 | "ILM honours ONLY a top-level `prefix`; a nested `filter` is silently dropped on export" | A `Filter: {Prefix: ...}` **survives a direct S3 put/get round-trip** (verified live). The drop was in rc's JSON serialization. Whether the expiry scanner honours Filter at execution time remains unverified — top-level `Prefix` is still the recommended shape. |
 | "`ilm rule import` REQUIRES an `id` on every rule" | rc-level validation. The S3 put accepts id-less rules; `bucket_lifecycle` generates deterministic content-derived IDs anyway so comparisons and server state stay stable. |
+| "Versioned buckets are undeletable" | `rc bucket remove --force` was unimplemented client-side (exit 6). An EMPTY versioned bucket deletes fine over direct S3 `DeleteBucket` (verified live by the molecule `modules` walk); non-empty buckets fail as usual. |
 | "clear-all lifecycle semantics unverified" | `DeleteBucketLifecycle` works (verified live) — `bucket_lifecycle` `state: absent` has defined semantics. The ROLE still rejects `rules: []` (deletion safety). |
 | rc exit-code taxonomy (3 = the only retryable) as the retry key | Replaced by HTTP-level classification in module_utils; no string/exit-code matching anywhere. |
 

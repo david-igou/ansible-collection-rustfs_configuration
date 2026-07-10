@@ -105,6 +105,17 @@ def is_bad_credential(exc):
     return any(message.startswith("%s:" % code) for code in S3_BAD_CREDENTIAL_CODES)
 
 
+def is_disabled_account(exc):
+    """True when the error means the account exists but is disabled.
+
+    beta-8 answers a request from a disabled access key with
+    InvalidRequest/ErrAccessKeyDisabled (found live in molecule) - the
+    pair is valid, the account is administratively off. That is a probe
+    VERDICT, not a probe failure.
+    """
+    return "AccessKeyDisabled" in to_native(exc)
+
+
 def run_module():
     argument_spec = rustfs_argument_spec()
     argument_spec.update(
@@ -143,6 +154,15 @@ def run_module():
             credential["authenticated"] = True
             credential["authorized"] = False
             credential["detail"] = to_native(exc)
+        except RustfsError as exc:
+            if not is_disabled_account(exc):
+                raise
+            # Disabled account: the pair is valid, the account is off -
+            # nothing further can be probed.
+            credential["authenticated"] = True
+            credential["authorized"] = False
+            credential["detail"] = to_native(exc)
+            module.exit_json(changed=False, credential=credential)
 
         if bucket is not None:
             try:

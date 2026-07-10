@@ -29,8 +29,8 @@ options:
   state:
     description:
       - Whether the bucket should exist.
-      - Removal fails cleanly when the bucket is not empty, and versioned
-        buckets cannot be deleted on 1.0.0-beta.8 at all.
+      - Removal fails cleanly when the bucket is not empty (on a
+        versioned bucket that includes noncurrent object versions).
     type: str
     choices:
       - present
@@ -158,8 +158,8 @@ def run_module():
                         module.fail_json(
                             msg=(
                                 "cannot delete bucket %s: %s (non-empty buckets must be "
-                                "emptied first; versioned buckets are undeletable on "
-                                "RustFS 1.0.0-beta.8)" % (name, to_native(exc))
+                                "emptied first - on a versioned bucket that includes "
+                                "noncurrent object versions)" % (name, to_native(exc))
                             )
                         )
             module.exit_json(**result)

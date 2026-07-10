@@ -57,6 +57,32 @@ Breaking changes (role spec):
   download/bake is gone.
 - New `rustfs_state_ca_bundle` for private-CA endpoints.
 
+Test suite (from a dedicated meaningfulness audit of units + e2e):
+
+- Per-module unit tests pin the pure decision logic e2e only exercises
+  coarsely: the credential probe's authentication-vs-authorization
+  verdicts, bucket versioning's unconfigured==suspended tri-state,
+  attachment union/exclusive set math, group append-vs-replace membership
+  math, user create/rotate/status interplay, and deterministic lifecycle
+  rule-ID generation. module_utils additions cover the transport-error →
+  retryable mapping, TLS verify/CA plumbing on both planes, retry backoff
+  timing, the service-account policy-as-JSON-string serde, and the
+  500-as-not-found handling across every admin reader.
+- The molecule `default` scenario's spec grew into a small estate (four
+  buckets covering all three lifecycle shapes — noncurrent expiry,
+  current-object `Expiration.Days`, `Date`-based — with versioning mix,
+  three scoped policies, two users), and verify now reads the server back
+  through an independent tool (the rc CLI the side-effect phase installs)
+  after each drift repair, plus a real authorization round-trip: an
+  object PUT with the managed user's credentials, confirmed on the
+  server's disk.
+- A new molecule `modules` scenario walks the raw-module surface the role
+  deliberately never touches: quotas, groups, service accounts (including
+  the no-update-endpoint no-op), exclusive attachments (detach), user
+  status/secret rotation, bucket deletion (and the versioned-undeletable
+  quirk), deleting an attached policy (the 500 detach-first quirk), and
+  the authorization-denied credential verdict.
+
 Unchanged (stable API): report strings, `set_stats` names, gate order and
 semantics, deletion safety, and the rest of the `rustfs_state_*` spec.
 

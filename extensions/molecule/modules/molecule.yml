@@ -1,0 +1,34 @@
+---
+# Raw-module e2e: exercises the module surfaces the rustfs_state role
+# deliberately never reaches (quotas, groups, service accounts, deletion,
+# exclusive attachments, status changes, authorization-denied probes)
+# against a live RustFS server. The converge is a CRUD walk with inline
+# idempotence assertions, so molecule's idempotence step (which would
+# re-run the whole walk, including deliberately non-idempotent steps like
+# secret rotation) is excluded from the sequence.
+ansible:
+  executor:
+    args:
+      ansible_playbook:
+        - --inventory=inventory/
+        - --inventory=${MOLECULE_EPHEMERAL_DIRECTORY}/inventory/
+  playbooks:
+    create: create.yml
+    destroy: destroy.yml
+    prepare: prepare.yml
+    converge: converge.yml
+    verify: verify.yml
+
+scenario:
+  name: modules
+  test_sequence:
+    - dependency
+    - syntax
+    - create
+    - prepare
+    - converge
+    - verify
+    - destroy
+
+verifier:
+  name: ansible

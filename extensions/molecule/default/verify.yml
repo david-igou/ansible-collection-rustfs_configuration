@@ -57,7 +57,99 @@
         that:
           - "'app-data' in _server_buckets.stdout_lines"
           - "'app-backups' in _server_buckets.stdout_lines"
+          - "'app-logs' in _server_buckets.stdout_lines"
+          - "'app-archive' in _server_buckets.stdout_lines"
           - "'drift-probe' not in _server_buckets.stdout_lines"
+
+    # ---- 1b. independent read-backs via the side-effect rc install ----
+    # The change-set assert above proves the role THINKS it repaired the
+    # drift; these read the server back through a DIFFERENT tool (the rc
+    # CLI + admin alias side_effect left behind) and confirm the content.
+    - name: Read versioning of app-backups back through rc
+      ansible.builtin.command: /tmp/molecule-rustfs-drift/rc bucket version info drift/app-backups --json
+      environment:
+        XDG_CONFIG_HOME: /tmp/molecule-rustfs-drift/xdg
+      register: _rc_versioning
+      changed_when: false
+
+    - name: Assert the versioning drift was really repaired server-side
+      ansible.builtin.assert:
+        that: (_rc_versioning.stdout | from_json).enabled | bool
+        fail_msg: "server still reports versioning suspended: {{ _rc_versioning.stdout }}"
+
+    - name: Read lifecycle rules of app-backups back through rc
+      ansible.builtin.command: /tmp/molecule-rustfs-drift/rc ilm rule export drift/app-backups
+      environment:
+        XDG_CONFIG_HOME: /tmp/molecule-rustfs-drift/xdg
+      register: _rc_ilm
+      changed_when: false
+
+    - name: Assert the lifecycle drift was really repaired server-side
+      vars:
+        _rc_rules: "{{ (_rc_ilm.stdout | from_json).rules }}"
+      ansible.builtin.assert:
+        that:
+          - _rc_rules | length == 2
+          - _rc_rules | map(attribute='noncurrentVersionExpiration.noncurrentDays') | sort == [14, 90]
+          - "'33333333-3333-3333-3333-333333333333' not in (_rc_rules | map(attribute='id') | list)"
+        fail_msg: "server still carries drifted lifecycle rules: {{ _rc_ilm.stdout }}"
+
+    - name: Read policy app-rw back through rc
+      ansible.builtin.command: /tmp/molecule-rustfs-drift/rc admin policy info drift app-rw --json
+      environment:
+        XDG_CONFIG_HOME: /tmp/molecule-rustfs-drift/xdg
+      register: _rc_policy
+      changed_when: false
+
+    - name: Assert the policy drift was really repaired server-side (write statement restored)
+      ansible.builtin.assert:
+        that: >-
+          (_rc_policy.stdout | from_json).policy.policy.Statement
+          | map(attribute='Action') | flatten | unique
+          | intersect(['s3:PutObject', 's3:DeleteObject']) | length == 2
+        fail_msg: "app-rw still lacks its write statement: {{ _rc_policy.stdout }}"
+
+    # ---- 1c. authorization round-trip: the policy must actually GRANT ----
+    # Liveness proves app-user authenticates and can list; this proves the
+    # repaired app-rw policy grants WRITE, by putting a real object with
+    # app-user's credentials and finding it on the server's disk.
+    - name: Register an rc alias with app-user's credentials
+      ansible.builtin.command:
+        argv:
+          - /tmp/molecule-rustfs-drift/rc
+          - alias
+          - set
+          - authz
+          - "{{ rustfs_state_endpoint }}"
+          - app-user
+          - "{{ rustfs_molecule_user_secret_key }}"
+      environment:
+        XDG_CONFIG_HOME: /tmp/molecule-rustfs-drift/xdg
+      changed_when: true
+
+    - name: Write a probe object
+      ansible.builtin.copy:
+        content: "authz probe\n"
+        dest: /tmp/molecule-rustfs-drift/authz-probe.txt
+        mode: "0600"
+      changed_when: false
+
+    - name: Upload the probe object as app-user
+      ansible.builtin.command: >-
+        /tmp/molecule-rustfs-drift/rc cp
+        /tmp/molecule-rustfs-drift/authz-probe.txt authz/app-data/authz-probe.txt
+      environment:
+        XDG_CONFIG_HOME: /tmp/molecule-rustfs-drift/xdg
+      changed_when: true
+
+    - name: Read app-data's server-side contents
+      ansible.builtin.command: podman exec rustfs-server ls /data/app-data
+      register: _server_objects
+      changed_when: false
+
+    - name: Assert the object landed (policy grants write, end to end)
+      ansible.builtin.assert:
+        that: "'authz-probe.txt' in _server_objects.stdout_lines"
 
     # ---- 2. clean follow-up run ----
     - name: Converge again (must be clean)

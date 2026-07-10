@@ -23,3 +23,5 @@ exclude_paths:
   - .github/
   - extensions/molecule/default/create.yml
   - extensions/molecule/default/destroy.yml
+  - extensions/molecule/modules/create.yml
+  - extensions/molecule/modules/destroy.yml

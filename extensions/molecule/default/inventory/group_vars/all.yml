@@ -5,6 +5,7 @@
 rustfs_molecule_admin_access_key: molecule-admin
 rustfs_molecule_admin_secret_key: molecule-admin-secret-key
 rustfs_molecule_user_secret_key: molecule-user-secret-key
+rustfs_molecule_writer_secret_key: molecule-writer-secret-key
 
 # rc pin for side_effect's private install (drift injection behind the
 # role's back). Mirrors the role defaults; both are Renovate-tracked.

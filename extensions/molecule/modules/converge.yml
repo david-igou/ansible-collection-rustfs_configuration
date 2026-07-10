@@ -1,0 +1,434 @@
+---
+# Raw-module CRUD walk: create -> assert changed -> re-run -> assert
+# idempotent -> mutate -> remove, per resource type, against a live
+# server. Everything here is surface the rustfs_state role deliberately
+# never touches. Connection params flow through the collection's action
+# group (which this play thereby also exercises).
+- name: Converge — raw-module CRUD walk
+  hosts: stubs
+  gather_facts: false
+  module_defaults:
+    group/david_igou.rustfs.rustfs:
+      endpoint: "{{ rustfs_endpoint }}"
+      access_key: "{{ rustfs_molecule_admin_access_key }}"
+      secret_key: "{{ rustfs_molecule_admin_secret_key }}"
+  tasks:
+    # ---- fixtures: policies, buckets, users the walks below need ----
+    - name: Create a bucket-scoped policy (grants app-scope only)
+      david_igou.rustfs.policy:
+        name: scoped-rw
+        document:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action: [s3:ListBucket, s3:GetObject, s3:PutObject]
+              Resource: [arn:aws:s3:::app-scope, arn:aws:s3:::app-scope/*]
+
+    - name: Create a disposable attachment-test policy
+      david_igou.rustfs.policy:
+        name: temp-policy
+        document:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action: [s3:ListBucket]
+              Resource: [arn:aws:s3:::app-scope]
+
+    - name: Create buckets (unversioned deletable, versioned keeper, scope target)
+      david_igou.rustfs.bucket:
+        name: "{{ item.name }}"
+        versioning: "{{ item.versioning }}"
+      loop:
+        - {name: quota-bucket, versioning: suspended}
+        - {name: versioned-keeper, versioning: enabled}
+        - {name: app-scope, versioning: suspended}
+
+    - name: Create users
+      david_igou.rustfs.user:
+        name: "{{ item.name }}"
+        secret: "{{ item.secret }}"
+      loop:
+        - {name: alice-user, secret: "{{ rustfs_molecule_alice_secret }}"}
+        - {name: bob-user, secret: "{{ rustfs_molecule_bob_secret }}"}
+        - {name: scoped-user, secret: "{{ rustfs_molecule_scoped_secret }}"}
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Scope scoped-user to app-scope only
+      david_igou.rustfs.policy_attachment:
+        user: scoped-user
+        policies: [scoped-rw]
+
+    # ---- bucket_quota: set -> idempotent -> read back -> clear ----
+    - name: Set a hard quota (human-readable size)
+      david_igou.rustfs.bucket_quota:
+        bucket: quota-bucket
+        size: 500MB
+      register: _quota_set
+
+    - name: Set the same quota again
+      david_igou.rustfs.bucket_quota:
+        bucket: quota-bucket
+        size: 500MB
+      register: _quota_again
+
+    - name: Read the bucket back (single-name info mode)
+      david_igou.rustfs.bucket_info:
+        name: quota-bucket
+      register: _quota_bucket_info
+
+    - name: Assert quota set, idempotent, and readable
+      ansible.builtin.assert:
+        that:
+          - _quota_set is changed
+          - _quota_again is not changed
+          - _quota_bucket_info.bucket.quota == ('500MB' | ansible.builtin.human_to_bytes)
+        fail_msg: "quota walk broken: {{ _quota_bucket_info.bucket | default({}) }}"
+
+    - name: Clear the quota
+      david_igou.rustfs.bucket_quota:
+        bucket: quota-bucket
+        state: absent
+      register: _quota_clear
+
+    - name: Assert the clear changed and a re-clear is a no-op
+      david_igou.rustfs.bucket_quota:
+        bucket: quota-bucket
+        state: absent
+      register: _quota_clear_again
+      failed_when: not (_quota_clear is changed) or (_quota_clear_again is changed)
+
+    # ---- group: create -> idempotent -> append -> replace -> status ----
+    # GUARDED: 1.0.0-beta.8 answers POST /groups with HTTP 501
+    # NotImplemented (found live by this scenario) — the group admin API
+    # is stubbed server-side even though the endpoints exist in the rc
+    # client. The rescue tolerates ONLY that failure, so the walk
+    # self-activates on the first server build that implements groups,
+    # while any other failure still breaks the run.
+    - name: Group management walk
+      block:
+        - name: Create a group with one member
+          david_igou.rustfs.group:
+            name: developers
+            members: [alice-user]
+          register: _group_create
+
+        - name: Re-run the same group spec
+          david_igou.rustfs.group:
+            name: developers
+            members: [alice-user]
+          register: _group_again
+
+        - name: Append a member (must not remove alice)
+          david_igou.rustfs.group:
+            name: developers
+            members: [bob-user]
+            append: true
+          register: _group_append
+
+        - name: Read the group back (single-name info mode)
+          david_igou.rustfs.group_info:
+            name: developers
+          register: _group_info
+
+        - name: Assert group create/idempotence/append semantics
+          ansible.builtin.assert:
+            that:
+              - _group_create is changed
+              - _group_again is not changed
+              - _group_append is changed
+              - _group_info.group.members | sort == ['alice-user', 'bob-user']
+            fail_msg: "group walk broken: {{ _group_info.group | default({}) }}"
+
+        - name: Replace membership (must remove bob)
+          david_igou.rustfs.group:
+            name: developers
+            members: [alice-user]
+          register: _group_replace
+
+        - name: Read the group back after replace
+          david_igou.rustfs.group_info:
+            name: developers
+          register: _group_info_replaced
+
+        - name: Assert replace removed the extra member
+          ansible.builtin.assert:
+            that:
+              - _group_replace is changed
+              - _group_info_replaced.group.members == ['alice-user']
+
+        - name: Attach a policy to the group
+          david_igou.rustfs.policy_attachment:
+            group: developers
+            policies: [readonly]
+          register: _group_attach
+
+        - name: Assert the group attachment landed
+          david_igou.rustfs.group_info:
+            name: developers
+          register: _group_info_attached
+          failed_when: >-
+            not (_group_attach is changed)
+            or _group_info_attached.group.policies != ['readonly']
+
+        - name: Disable the group
+          david_igou.rustfs.group:
+            name: developers
+            status: disabled
+          register: _group_disable
+
+        - name: Assert the status change registered
+          david_igou.rustfs.group_info:
+            name: developers
+          register: _group_info_disabled
+          failed_when: >-
+            not (_group_disable is changed)
+            or _group_info_disabled.group.status != 'disabled'
+
+      rescue:
+        - name: Assert the only tolerated group failure is server-side NotImplemented
+          ansible.builtin.assert:
+            that: "'NotImplemented' in (ansible_failed_result.msg | default(''))"
+            fail_msg: "group walk failed for a real reason: {{ ansible_failed_result.msg | default('?') }}"
+
+        - name: Record that this server build does not implement groups
+          ansible.builtin.set_fact:
+            _groups_unimplemented: true
+
+        - name: Note the skip
+          ansible.builtin.debug:
+            msg: >-
+              Group admin API not implemented on this server build (HTTP
+              501) — group coverage skipped; it re-arms automatically when
+              a server build implements /groups.
+
+    # ---- service_account: create -> no-update no-op -> info -> absent ----
+    - name: Create a scoped service account
+      david_igou.rustfs.service_account:
+        name: svc-velero
+        secret: "{{ rustfs_molecule_svc_secret }}"
+        display_name: velero
+        description: molecule walk service account
+        expiration: "2030-01-01T00:00:00Z"
+        policy:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action: [s3:PutObject, s3:GetObject, s3:ListBucket]
+              Resource: [arn:aws:s3:::app-scope, arn:aws:s3:::app-scope/*]
+      register: _sa_create
+
+    # The server has no service-account update endpoint (quirk ledger) —
+    # a re-run with a DIFFERENT policy must be a reported no-op, never a
+    # silent mutation.
+    - name: Re-run the service account with a different policy
+      david_igou.rustfs.service_account:
+        name: svc-velero
+        secret: "{{ rustfs_molecule_svc_secret }}"
+        policy:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action: [s3:GetObject]
+              Resource: [arn:aws:s3:::app-scope/*]
+      register: _sa_rerun
+
+    - name: Read service accounts back (list-by-user and single)
+      david_igou.rustfs.service_account_info:
+        user: "{{ rustfs_molecule_admin_access_key }}"
+      register: _sa_list
+
+    - name: Read the service account back (single)
+      david_igou.rustfs.service_account_info:
+        name: svc-velero
+      register: _sa_single
+
+    - name: Assert service-account semantics (created, immutable on re-run, readable)
+      ansible.builtin.assert:
+        that:
+          - _sa_create is changed
+          - _sa_rerun is not changed
+          - _sa_list.service_accounts | selectattr('access_key', 'equalto', 'svc-velero') | list | length == 1
+          - _sa_single.service_account.exists
+        fail_msg: >-
+          service-account walk broken:
+          list={{ _sa_list.service_accounts }} single={{ _sa_single.service_account }}
+
+    - name: Remove the service account
+      david_igou.rustfs.service_account:
+        name: svc-velero
+        state: absent
+      register: _sa_absent
+      failed_when: _sa_absent is not changed
+
+    # ---- policy_attachment: union preserves, exclusive detaches ----
+    - name: Attach two builtins to alice (union baseline)
+      david_igou.rustfs.policy_attachment:
+        user: alice-user
+        policies: [readonly, readwrite]
+
+    - name: Union-attach temp-policy (extras must survive)
+      david_igou.rustfs.policy_attachment:
+        user: alice-user
+        policies: [temp-policy]
+
+    - name: Read alice back
+      david_igou.rustfs.user_info:
+        name: alice-user
+      register: _alice_union
+
+    - name: Assert the union preserved every attachment
+      ansible.builtin.assert:
+        that: _alice_union.user.policies | sort == ['readonly', 'readwrite', 'temp-policy']
+
+    # ---- policy absent-while-attached: the documented 500 quirk ----
+    - name: Deleting an attached policy must fail with the detach-first error
+      block:
+        - name: Try to delete temp-policy while attached
+          david_igou.rustfs.policy:
+            name: temp-policy
+            state: absent
+
+        - name: Unreachable — the delete must have failed above
+          ansible.builtin.fail:
+            msg: deleting an attached policy unexpectedly succeeded
+      rescue:
+        - name: Assert the failure carries the detach-first guidance
+          ansible.builtin.assert:
+            that: "'detach it first' in ansible_failed_result.msg"
+            fail_msg: "unexpected failure shape: {{ ansible_failed_result.msg }}"
+
+    - name: Exclusive-attach the desired-only set (this IS detach on RustFS)
+      david_igou.rustfs.policy_attachment:
+        user: alice-user
+        policies: [readonly]
+        exclusive: true
+      register: _alice_exclusive
+
+    - name: Read alice back after exclusive
+      david_igou.rustfs.user_info:
+        name: alice-user
+      register: _alice_detached
+
+    - name: Assert exclusive mode detached the extras
+      ansible.builtin.assert:
+        that:
+          - _alice_exclusive is changed
+          - _alice_detached.user.policies == ['readonly']
+
+    - name: Delete temp-policy now that it is detached
+      david_igou.rustfs.policy:
+        name: temp-policy
+        state: absent
+      register: _policy_absent
+      failed_when: _policy_absent is not changed
+
+    # ---- credential_info: authorization-denied is a verdict, not a retry ----
+    - name: Probe scoped-user against a bucket its policy does not grant
+      david_igou.rustfs.credential_info:
+        access_key: scoped-user
+        secret_key: "{{ rustfs_molecule_scoped_secret }}"
+        bucket: quota-bucket
+      register: _scoped_denied
+
+    - name: Probe scoped-user against its own bucket
+      david_igou.rustfs.credential_info:
+        access_key: scoped-user
+        secret_key: "{{ rustfs_molecule_scoped_secret }}"
+        bucket: app-scope
+      register: _scoped_granted
+
+    - name: Assert the authentication/authorization split
+      ansible.builtin.assert:
+        that:
+          - _scoped_denied.credential.authenticated
+          - not _scoped_denied.credential.bucket_listable
+          - not _scoped_denied.credential.usable
+          - _scoped_granted.credential.usable
+        fail_msg: >-
+          credential verdicts wrong:
+          denied={{ _scoped_denied.credential }} granted={{ _scoped_granted.credential }}
+
+    # ---- user: status -> rotation -> absent ----
+    - name: Disable bob
+      david_igou.rustfs.user:
+        name: bob-user
+        status: disabled
+      register: _bob_disable
+
+    - name: Assert bob is disabled server-side
+      david_igou.rustfs.user_info:
+        name: bob-user
+      register: _bob_info
+      failed_when: >-
+        not (_bob_disable is changed) or _bob_info.user.status != 'disabled'
+
+    # A disabled account's key is VALID but administratively off - the
+    # probe must report that as a verdict (found live: beta-8 answers
+    # InvalidRequest/ErrAccessKeyDisabled).
+    - name: Probe the disabled account
+      david_igou.rustfs.credential_info:
+        access_key: bob-user
+        secret_key: "{{ rustfs_molecule_bob_secret }}"
+      register: _bob_disabled_probe
+      failed_when: >-
+        not _bob_disabled_probe.credential.authenticated
+        or _bob_disabled_probe.credential.usable
+        or 'AccessKeyDisabled' not in _bob_disabled_probe.credential.detail
+
+    - name: Rotate bob's secret (explicit opt-in, always a change)
+      david_igou.rustfs.user:
+        name: bob-user
+        secret: "{{ rustfs_molecule_bob_secret }}-rotated"
+        update_secret: true
+      register: _bob_rotate
+      failed_when: _bob_rotate is not changed
+
+    - name: Re-enable bob (covers the enable direction)
+      david_igou.rustfs.user:
+        name: bob-user
+        status: enabled
+      register: _bob_enable
+      failed_when: _bob_enable is not changed
+
+    - name: Verify the rotated secret authenticates
+      david_igou.rustfs.credential_info:
+        access_key: bob-user
+        secret_key: "{{ rustfs_molecule_bob_secret }}-rotated"
+      register: _bob_rotated_probe
+      failed_when: not _bob_rotated_probe.credential.authenticated
+
+    - name: Remove bob
+      david_igou.rustfs.user:
+        name: bob-user
+        state: absent
+      register: _bob_absent
+      failed_when: _bob_absent is not changed
+
+    # ---- group teardown (after members were exercised) ----
+    - name: Remove the group
+      david_igou.rustfs.group:
+        name: developers
+        state: absent
+      register: _group_absent
+      failed_when: _group_absent is not changed
+      when: not (_groups_unimplemented | default(false))
+
+    # ---- bucket deletion: unversioned deletes, versioned is undeletable ----
+    - name: Delete the unversioned bucket
+      david_igou.rustfs.bucket:
+        name: quota-bucket
+        state: absent
+      register: _bucket_absent
+      failed_when: _bucket_absent is not changed
+
+    # v1 believed versioned buckets were undeletable — an rc artifact
+    # (`rc bucket remove --force` was unimplemented client-side). An EMPTY
+    # versioned bucket deletes fine over the direct S3 API, overturned
+    # live by this walk.
+    - name: Delete the (empty) versioned bucket
+      david_igou.rustfs.bucket:
+        name: versioned-keeper
+        state: absent
+      register: _versioned_absent
+      failed_when: _versioned_absent is not changed
