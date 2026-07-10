@@ -1,41 +1,65 @@
-# david_igou.rustfs_configuration
+# david_igou.rustfs
 
 Declarative in-server state management for [RustFS](https://rustfs.com)
-object-storage servers, driven by the official
-[`rc` CLI](https://github.com/rustfs/cli) — the only programmable management
-surface RustFS ships (the admin REST API is undocumented and pre-stable;
-`mc admin` is incompatible with RustFS's admin namespace).
+object-storage servers, via **native Ansible modules** that speak the two
+management planes directly from Python: the S3 API (buckets, versioning,
+lifecycle) through botocore, and the RustFS admin REST API
+(`/rustfs/admin/v3/*` — users, policies, attachments, groups, service
+accounts, quota) with SigV4-signed plain-JSON requests. No CLI binary is
+downloaded or shelled out to anywhere.
 
 **Scope: Layer 1 (in-server state) only** — buckets, versioning, lifecycle
-(ILM) rules, IAM policies, users, policy attachments, and credential
-liveness verification, with Ansible check mode as drift detection. Server
-deployment and runtime configuration are deliberately out of scope.
+(ILM) rules, quota, IAM policies, users, groups, service accounts, policy
+attachments, and credential liveness verification, with Ansible check mode
+as drift detection. Server deployment and runtime configuration are
+deliberately out of scope.
 
 ## Contents
 
 | Content | Purpose |
 |---|---|
-| role `david_igou.rustfs_configuration.rustfs_state` | Reconcile ONE instance's state against a declarative per-host spec |
-| filter `david_igou.rustfs_configuration.rustfs_canonical_policy` | Canonical IAM-policy comparison (server ordering is unstable) |
-| filter `david_igou.rustfs_configuration.rustfs_canonical_ilm` | Canonical ILM-rule comparison (ids server-generated but required on import) |
+| role `rustfs_state` | Reconcile ONE instance's state against a declarative per-host spec |
+| `rustfs_bucket` / `rustfs_bucket_info` | Bucket existence + versioning |
+| `rustfs_bucket_lifecycle` | The bucket's whole ILM ruleset (full-replace, canonical comparison) |
+| `rustfs_bucket_quota` | Hard size quota |
+| `rustfs_policy` / `rustfs_policy_info` | Canned IAM policies (canonical comparison) |
+| `rustfs_user` / `rustfs_user_info` | IAM users (secret rotation only by explicit opt-in) |
+| `rustfs_group` / `rustfs_group_info` | IAM groups + membership |
+| `rustfs_service_account` / `rustfs_service_account_info` | Scoped service accounts |
+| `rustfs_policy_attachment` | Policies attached to a user/group (union or exclusive) |
+| `rustfs_credential_info` | Credential liveness probe (authentication vs authorization) |
+| filter `rustfs_canonical_policy` | Canonical IAM-policy comparison (server ordering is unstable) |
+| filter `rustfs_canonical_ilm` | Canonical ILM-rule comparison (id/scoping/date churn absorbed) |
+
+All modules share one connection interface (`endpoint`, `access_key`,
+`secret_key`, TLS/retry options — also injectable via `RUSTFS_*`
+environment variables) and are grouped under the
+`david_igou.rustfs.rustfs` action group for
+`module_defaults`.
 
 ## Design invariants
 
-1. **Read-first reconcile** — every resource read via `rc … --json`, diffed
-   with canonical filters, written only on mismatch.
-2. **Deletion safety** — server resources absent from the spec are reported
-   (`unmanaged_on_server`), optionally gated (`rustfs_state_fail_on_unmanaged`),
-   **never deleted**.
+1. **Read-first reconcile** — every module reads, compares canonically,
+   and writes only on mismatch; `changed` means a real (or pending) write.
+2. **Deletion safety (role)** — server resources absent from the spec are
+   reported (`unmanaged_on_server`), optionally gated
+   (`rustfs_state_fail_on_unmanaged`), **never deleted**. The modules
+   expose `state: absent` / `exclusive:` primitives for operators; the
+   role never uses them.
 3. **Roles are functions** — no secret lookups inside the role: every
    credential arrives resolved; secret-store lookup expressions belong in
    the caller's data (host_vars). Secrets are `no_log` wherever they flow.
 4. **Credential liveness** — the pair *as stored in your secret store* must
-   authenticate, proven every run per user with `liveness_bucket`.
-5. **Check mode = drift detection** — reads execute, mutations do not, the
-   play fails on pending changes or dead credentials.
+   authenticate, proven every run per user with `liveness_bucket`. The
+   probe distinguishes authentication from authorization (an
+   `AccessDenied` is a verdict, not a retryable network blip).
+5. **Check mode = drift detection** — the modules support check mode
+   natively: reads execute, mutations do not, the play fails on pending
+   changes or dead credentials.
 6. **Classified retries** — the beta-8 admin API refuses connections in
-   bursts; every rc call retries, but only on the rc error envelope's
-   `network_error` class; permanent errors fail fast.
+   bursts; every API call retries, but only on transport-level failures
+   (connection refused/reset, timeouts, HTTP 502/503/504); permanent
+   errors fail fast.
 
 See [`docs/server-quirks.md`](docs/server-quirks.md) for the empirical
 server-behavior matrix these invariants come from.
@@ -56,14 +80,14 @@ rustfs_servers:
 # host_vars/rustfs-cold.yml — credentials shown resolved via a lookup that
 # lives HERE (data), not in the role. `http://` endpoints are accepted too
 # (for a plain-HTTP dev/test instance); rustfs_state_tls_insecure only
-# affects TLS endpoints.
+# affects TLS endpoints (rustfs_state_ca_bundle for private CAs).
 rustfs_state_endpoint: https://nas.example.net:20292
 rustfs_state_admin_access_key: "{{ lookup('community.general.onepassword', 'rustfs-cold-admin', field='username', vault='infra') }}"
 rustfs_state_admin_secret_key: "{{ lookup('community.general.onepassword', 'rustfs-cold-admin', field='password', vault='infra') }}"
 
 # A custom IAM policy. Write the document the natural way — no ID / Sid /
 # Condition boilerplate needed; the server injects those empties and the
-# canonical filter absorbs them, so this converges to steady state.
+# canonical comparison absorbs them, so this converges to steady state.
 rustfs_state_policies:
   - name: app-rw
     document:
@@ -80,29 +104,27 @@ rustfs_state_policies:
             - arn:aws:s3:::backups/*
 
 rustfs_state_buckets:
-  # A versioned bucket: keep the live object, prune OLD VERSIONS after 30 days.
-  # Every rule MUST carry an `id` (ids are ignored in drift comparison). To
-  # scope a rule to a path use a top-level `prefix: "sub/"` — NOT a nested
-  # `filter:` (the server honours only top-level prefix).
+  # A versioned bucket: keep the live object, prune OLD VERSIONS after 30
+  # days. Rules use the standard S3 API shape (PascalCase — what every S3
+  # tool documents); `ID` is optional (deterministic IDs are generated).
+  # Scope a rule to a path with a top-level `Prefix: "sub/"`.
   - name: backups
     versioning: true
     lifecycle:
       rules:
-        - id: expire-noncurrent-30d
-          status: Enabled
-          noncurrentVersionExpiration:
-            noncurrentDays: 30
+        - Status: Enabled
+          NoncurrentVersionExpiration:
+            NoncurrentDays: 30
   # A non-versioned bucket: expire CURRENT OBJECTS 14 days after creation
-  # (the shape a logs / cluster-backup bucket needs — note `expiration.days`,
-  # distinct from the `noncurrentVersionExpiration` above).
+  # (the shape a logs / cluster-backup bucket needs — note `Expiration.Days`,
+  # distinct from the `NoncurrentVersionExpiration` above).
   - name: logs
     versioning: false
     lifecycle:
       rules:
-        - id: expire-objects-14d
-          status: Enabled
-          expiration:
-            days: 14
+        - Status: Enabled
+          Expiration:
+            Days: 14
 
 rustfs_state_users:
   - name: backup-writer
@@ -120,7 +142,7 @@ rustfs_state_users:
   hosts: rustfs_servers
   gather_facts: false
   roles:
-    - david_igou.rustfs_configuration.rustfs_state
+    - david_igou.rustfs.rustfs_state
 ```
 
 - Converge: `ansible-playbook site.yml`
@@ -132,6 +154,53 @@ rustfs_state_users:
 
 Full interface: [`roles/rustfs_state/README.md`](roles/rustfs_state/README.md)
 and `meta/argument_specs.yml` (validated at role start).
+
+### Using the modules directly
+
+Anything the role does not manage (groups, service accounts, quotas,
+deletions) is available as raw modules:
+
+```yaml
+- name: Scoped service account for velero
+  david_igou.rustfs.rustfs_service_account:
+    endpoint: https://nas.example.net:20292
+    access_key: "{{ admin_ak }}"
+    secret_key: "{{ admin_sk }}"
+    name: svc-velero
+    secret: "{{ svc_secret }}"
+    policy:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Action: [s3:PutObject, s3:GetObject, s3:ListBucket]
+          Resource: [arn:aws:s3:::velero, arn:aws:s3:::velero/*]
+```
+
+Set connection args once per play with the action group:
+
+```yaml
+module_defaults:
+  group/david_igou.rustfs.rustfs:
+    endpoint: https://nas.example.net:20292
+    access_key: "{{ admin_ak }}"
+    secret_key: "{{ admin_sk }}"
+```
+
+## Migrating from 1.x
+
+2.0.0 removes the `rc` CLI dependency entirely. Breaking changes:
+
+| 1.x | 2.0.0 |
+|---|---|
+| `rustfs_state_rc_version/_checksum/_arch/_url/_binary` | removed (no binary) |
+| `rustfs_state_alias` (+ charset asserts) | removed (no alias concept) |
+| `lifecycle.rules` in rc-export shape (lowercase `id`, `prefix`, `expiration.days`) | standard S3 API shape (`ID` optional, `Prefix`, `Expiration.Days`, PascalCase) |
+| controller needs the rc tarball / a baked binary | controller/EE needs **botocore** |
+| `rustfs_canonical_ilm` filter expects lowercase keys | accepts both shapes |
+| — | new: `rustfs_state_ca_bundle` for private CAs |
+
+Report strings, `set_stats` names, gates, and the rest of the
+`rustfs_state_*` spec are unchanged.
 
 ## Managing an estate
 
@@ -160,11 +229,10 @@ is ordinary data and loops cleanly — the role only ever sees the resolved
 list. Two operational notes:
 
 - **Verify authorization scope, not just liveness.** The role's liveness check
-  proves a credential *authenticates*; it does not prove the policy grants the
-  right verbs. To confirm a service account can do exactly what it should,
-  point your own `rc` alias at its resolved creds and probe:
-  `rc alias set check <endpoint> <access_key> <secret_key>` then
-  `rc ls check/<bucket>` (allowed?) and a put (denied for a read-only account?).
+  proves a credential *authenticates* and can list its liveness bucket; it
+  does not prove the policy grants every right verb. To audit a service
+  account, probe each bucket with `rustfs_credential_info` (per-bucket
+  `bucket_listable`) or exercise the verbs with any S3 client.
 - **Readable output at estate scale.** A full converge fans out into many
   tasks; the signal is the end-of-role summary. `ANSIBLE_STDOUT_CALLBACK=yaml`
   (or a `community.general.diff_*` callback) keeps that readable across dozens
@@ -179,22 +247,16 @@ Consume as a git source until a Galaxy release exists:
 collections:
   - name: https://github.com/david-igou/ansible-collection-rustfs_configuration.git
     type: git
-    version: v1.0.0
+    version: v2.0.0
 ```
 
 ## Requirements
 
 - ansible-core >= 2.16 (`meta/runtime.yml` floor; developed and CI-tested on 2.21)
+- **botocore** on the python that executes the modules (for
+  connection-local stub hosts: the controller/EE — it is preinstalled in
+  most execution environments that carry amazon.aws)
 - Network reach from the controller/EE to each instance endpoint
-- linux-amd64 controller/EE by default — the role downloads a pinned,
-  checksum-verified `rc` tarball (the static musl build) at runtime. Other
-  arches: set `rustfs_state_rc_arch` (+ matching checksum).
-- **Recommended for production/AAP: bake `rc` into your execution
-  environment** and set `rustfs_state_rc_binary` to its path. Runtime
-  download adds a GitHub dependency (and rate-limit exposure) to every run;
-  a baked binary removes it and makes the version fully reproducible with
-  the EE image. Bake from the release tarball or the `rustfs/rc` container
-  image (pin it by digest — its tags are mutable).
 
 ## Development
 
@@ -202,8 +264,8 @@ Molecule needs the repo checked out at a collection path and run from the
 collection root (so `extensions/molecule/config.yml` engages):
 
 ```console
-git clone <repo> ansible_collections/david_igou/rustfs_configuration
-cd ansible_collections/david_igou/rustfs_configuration
+git clone <repo> ansible_collections/david_igou/rustfs
+cd ansible_collections/david_igou/rustfs
 make test        # full molecule suite (podman required)
 ```
 
@@ -211,17 +273,18 @@ Tests use
 [`david_igou.molecule_provisioners`](https://github.com/david-igou/ansible-collection-molecule_provisioners)
 (podman backend): the RustFS server (`rustfs/rustfs:1.0.0-beta.8`, the exact
 version validated live) is a provisioner-managed container; the role runs on
-a connection-local stub host shaped like production.
+a connection-local stub host shaped like production. The molecule
+side-effect phase still uses a pinned `rc` CLI — deliberately, as an
+independent tool injecting drift behind the modules' backs.
 
-### Upgrade checklist (rc pin or server image bump)
+### Upgrade checklist (server image bump)
 
-1. Bump `rustfs_state_rc_version` AND `rustfs_state_rc_checksum` together
-   (Renovate bumps the version; the checksum is a manual PR step — a stale
-   checksum fails safe as a red download).
-2. Keep the molecule pin in
-   `extensions/molecule/default/inventory/group_vars/all.yml` in step.
-3. `make test` must pass — the first suspect on a server-image failure is
+1. Bump the server image pin and the rc pin (side-effect drift injector) in
+   `extensions/molecule/default/inventory/group_vars/all.yml`.
+2. `make test` must pass — the first suspect on a server-image failure is
    the `/data` server-side check (see docs/server-quirks.md).
+3. Re-verify the marked items in docs/server-quirks.md (the 404-vs-500
+   not-found shapes and the policy-info envelope are pinned to beta-8).
 4. Run your drift job against live instances right after any server upgrade.
 
 Note: RustFS marks ILM 🚧 "under testing" upstream; this collection's ILM

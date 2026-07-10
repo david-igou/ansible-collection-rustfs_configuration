@@ -4,17 +4,18 @@
 # See https://docs.ansible.com/ansible/latest/dev_guide/collections_galaxy_meta.html
 
 namespace: "david_igou"
-name: "rustfs_configuration"
-version: 1.0.0
+name: "rustfs"
+version: 2.0.0
 readme: README.md
 authors:
   - David Igou <igou.david@gmail.com>
 
 description: >-
   Declarative in-server state management for RustFS object-storage servers
-  via the official rc CLI: buckets, versioning, lifecycle, IAM
-  policies/users, policy attachments, and credential liveness verification,
-  with check mode as drift detection.
+  via native modules speaking the S3 and admin APIs directly: buckets,
+  versioning, lifecycle, quota, IAM policies/users/groups/service accounts,
+  policy attachments, and credential liveness verification, with check mode
+  as drift detection.
 license_file: LICENSE
 
 tags:
@@ -36,7 +37,7 @@ issues: https://github.com/david-igou/ansible-collection-rustfs_configuration/is
 build_ignore:
   - .gitignore
   - .ansible
-  - david_igou-rustfs_configuration-*.tar.gz
+  - david_igou-rustfs-*.tar.gz
   - importer_result.json
   - tests
   - extensions

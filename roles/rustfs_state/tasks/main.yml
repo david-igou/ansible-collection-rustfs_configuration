@@ -1,45 +1,12 @@
 ---
 # The role reconciles ONE RustFS instance: the inventory host it runs on
 # (a connection-local stub named after the instance). inventory_hostname
-# prefixes every report entry; rustfs_state_alias (default: the hostname)
-# is the rc alias.
+# prefixes every report entry. All server access goes through the
+# collection's rustfs_* modules (direct S3 + admin-API calls — no rc
+# binary, no alias store, no tempdir).
 #
-# check_mode: false throughout the scaffolding — drift-detection runs with
-# --check and still needs the rc binary, the alias, and live reads to
-# compute drift.
-
-- name: Assert the rc alias is safe for rc path parsing
-  ansible.builtin.assert:
-    that: rustfs_state_alias is match('^[a-z0-9][a-z0-9-]*$')
-    fail_msg: >-
-      rustfs_state_alias '{{ rustfs_state_alias }}' must match
-      ^[a-z0-9][a-z0-9-]*$ — dots and uppercase break rc alias/path
-      parsing. Set rustfs_state_alias explicitly when the inventory
-      hostname does not qualify.
-
-# Names flow into rc command lines and rendered file paths — reject
-# whitespace, flag-like leading '-', path separators and '..' up front so
-# a bad spec fails with a clear message instead of a shredded-workdir
-# escape or a shlex surprise.
-- name: Assert managed resource names are safe for rc commands and paths
-  ansible.builtin.assert:
-    that:
-      - >-
-        (rustfs_state_policies | map(attribute='name') | list
-         + rustfs_state_buckets | map(attribute='name') | list)
-        | reject('match', '^[a-zA-Z0-9][a-zA-Z0-9._-]*$') | list | length == 0
-      - >-
-        rustfs_state_users | map(attribute='name') | list
-        | reject('match', '^[a-z0-9][a-z0-9-]*$') | list | length == 0
-    fail_msg: >-
-      policy/bucket names must match ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ and user
-      names ^[a-z0-9][a-z0-9-]*$ (user names are embedded in rc liveness
-      aliases, which reject dots and uppercase). Offending entries:
-      {{ ((rustfs_state_policies | map(attribute='name') | list
-           + rustfs_state_buckets | map(attribute='name') | list)
-          | reject('match', '^[a-zA-Z0-9][a-zA-Z0-9._-]*$') | list
-          + (rustfs_state_users | map(attribute='name') | list
-             | reject('match', '^[a-z0-9][a-z0-9-]*$') | list)) | join(', ') }}
+# The modules support check mode natively: reads execute, mutations do
+# not, so drift-detection (--check) needs no check_mode: false scaffolding.
 
 # A liveness_bucket without a secret to test with would otherwise be
 # silently skipped — that silence reads as "credential verified".
@@ -54,9 +21,10 @@
          | rejectattr('secret_key', 'defined') | map(attribute='name') | join(', ') }}.
       Provide the resolved secret, or drop liveness_bucket.
 
-# Clear-all semantics of `rc ilm rule import` with an empty rule list are
-# UNVERIFIED on 1.0.0-beta.8 — forbid the ambiguous spec instead of
-# guessing (omit `lifecycle` to leave rules unmanaged).
+# An empty rule list would be a lifecycle DELETION — the role never
+# deletes; omit `lifecycle` to leave rules unmanaged. (Operators who
+# really want to clear a bucket's lifecycle can call the
+# rustfs_bucket_lifecycle module with state=absent themselves.)
 - name: Assert no bucket declares an empty lifecycle rule list
   ansible.builtin.assert:
     that: >-
@@ -66,147 +34,77 @@
       | rejectattr('lifecycle.rules')
       | list | length == 0
     fail_msg: >-
-      lifecycle.rules: [] is not allowed (clear-all semantics unverified
-      on the server) — omit the lifecycle key to leave rules unmanaged.
+      lifecycle.rules: [] is not allowed (the role never deletes) — omit
+      the lifecycle key to leave rules unmanaged.
 
-# `rc ilm rule import` rejects any rule lacking an `id` (the export always
-# emits one). A hand-written spec that omits it would otherwise fail deep
-# in the import with a generic rc error — assert it up front.
-- name: Assert every managed lifecycle rule carries an id
-  ansible.builtin.assert:
-    that: >-
-      rustfs_state_buckets
-      | selectattr('lifecycle', 'defined')
-      | map(attribute='lifecycle.rules', default=[])
-      | flatten
-      | rejectattr('id', 'defined')
-      | list | length == 0
-    fail_msg: >-
-      every lifecycle rule must carry an id (rc ilm rule import requires
-      it; ids are ignored in drift comparison). Copy rules verbatim from
-      `rc ilm rule export`.
+- name: Initialize run facts
+  ansible.builtin.set_fact:
+    rustfs_state_changes: []
+    rustfs_state_unmanaged: []
+    rustfs_state_liveness_failures: []
+    rustfs_state_diffs: []
 
-- name: Create working directory (rc binary, alias store, rendered documents)
-  ansible.builtin.tempfile:
-    state: directory
-    prefix: rustfs-state-
-  register: _rustfs_state_workdir_result
-  check_mode: false
-  changed_when: false
+# Admin connection parameters for every module call in this run, delivered
+# through the modules' RUSTFS_* environment fallbacks (the block below).
+# Environment — unlike a module_defaults action group — needs no eager
+# collection resolution, so ansible-lint's syntax-check works on an
+# uninstalled checkout. ca_bundle is only present when set — an empty
+# value must not reach the modules.
+- name: Compose connection environment
+  ansible.builtin.set_fact:
+    _rustfs_state_env: >-
+      {{ {'RUSTFS_ENDPOINT': rustfs_state_endpoint,
+          'RUSTFS_ACCESS_KEY': rustfs_state_admin_access_key,
+          'RUSTFS_SECRET_KEY': rustfs_state_admin_secret_key,
+          'RUSTFS_VALIDATE_CERTS': (not (rustfs_state_tls_insecure | bool)) | string,
+          'RUSTFS_RETRIES': rustfs_state_retries | string,
+          'RUSTFS_RETRY_DELAY': rustfs_state_retry_delay | string}
+         | combine(rustfs_state_ca_bundle
+                   | ternary({'RUSTFS_CA_BUNDLE': rustfs_state_ca_bundle}, {})) }}
+  no_log: true
 
 - name: Reconcile RustFS state
+  environment: "{{ _rustfs_state_env }}"
   block:
-    - name: Initialize run facts
-      ansible.builtin.set_fact:
-        _rustfs_state_workdir: "{{ _rustfs_state_workdir_result.path }}"
-        _rustfs_state_env:
-          XDG_CONFIG_HOME: "{{ _rustfs_state_workdir_result.path }}/xdg"
-        rustfs_state_changes: []
-        rustfs_state_unmanaged: []
-        rustfs_state_liveness_failures: []
-        rustfs_state_diffs: []
-
-    - name: Install pinned rc CLI
-      when: not rustfs_state_rc_binary
-      check_mode: false
-      block:
-        - name: Download rc tarball (checksum-verified)
-          ansible.builtin.get_url:
-            url: "{{ rustfs_state_rc_url }}"
-            dest: "{{ _rustfs_state_workdir }}/rc.tar.gz"
-            checksum: "{{ rustfs_state_rc_checksum }}"
-            mode: "0600"
-          changed_when: false
-
-        - name: Extract rc
-          ansible.builtin.unarchive:
-            src: "{{ _rustfs_state_workdir }}/rc.tar.gz"
-            dest: "{{ _rustfs_state_workdir }}"
-            remote_src: true
-          changed_when: false
-
-    - name: Resolve rc binary path
-      ansible.builtin.set_fact:
-        _rustfs_state_rc: "{{ rustfs_state_rc_binary | default(_rustfs_state_workdir ~ '/rc', true) }}"
-
-    # `rc alias set` validates the pair against the endpoint (exit 4 on
-    # rejected credentials), so this doubles as admin credential
-    # validation. Retries only rc exit code 3 (NetworkError).
-    - name: Register rc alias (validates admin credentials)
-      vars:
-        _rustfs_state_alias_argv:
-          - "{{ _rustfs_state_rc }}"
-          - alias
-          - set
-          - "{{ rustfs_state_alias }}"
-          - "{{ rustfs_state_endpoint }}"
-          - "{{ rustfs_state_admin_access_key }}"
-          - "{{ rustfs_state_admin_secret_key }}"
-      ansible.builtin.command:
-        argv: "{{ _rustfs_state_alias_argv + (rustfs_state_tls_insecure | bool | ternary(['--insecure'], [])) }}"
-      environment: "{{ _rustfs_state_env }}"
-      register: _rustfs_state_alias_result
-      retries: "{{ rustfs_state_retries }}"
-      delay: "{{ rustfs_state_retry_delay }}"
-      until: _rustfs_state_alias_result.rc != 3
-      failed_when: false
-      no_log: true
-      check_mode: false
-      changed_when: false
+    # The same probe rc's `alias set` performed: proves the admin pair
+    # authenticates (and can list) before any reconcile read. The explicit
+    # endpoint arg (redundant with the environment) keeps the task args
+    # non-empty — a bare module call makes ansible-lint's syntax-check
+    # resolve the module eagerly, which fails on an uninstalled checkout.
+    - name: Validate admin credentials
+      david_igou.rustfs.rustfs_credential_info:
+        endpoint: "{{ rustfs_state_endpoint }}"
+      register: _rustfs_state_admin_probe
 
     - name: Fail on rejected admin credentials
       ansible.builtin.assert:
-        that: _rustfs_state_alias_result.rc != 4
+        that: _rustfs_state_admin_probe.credential.usable
         fail_msg: >-
-          rc rejected the admin credentials for alias
-          {{ rustfs_state_alias }} ({{ rustfs_state_endpoint }}) — exit 4,
-          invalid access key or secret key. Secrets are never printed;
-          check the resolved values in the caller's data.
-
-    - name: Fail on any other alias registration error
-      ansible.builtin.assert:
-        that: _rustfs_state_alias_result.rc == 0
-        fail_msg: >-
-          rc alias set failed for {{ rustfs_state_alias }}
-          ({{ rustfs_state_endpoint }}) with rc={{ _rustfs_state_alias_result.rc }}
-          after retries. Secrets are never printed; run with
-          rustfs_state_retries=1 and inspect endpoint/TLS reachability.
+          the admin credentials for {{ rustfs_state_endpoint }} do not
+          authenticate ({{ _rustfs_state_admin_probe.credential.detail }}).
+          Secrets are never printed; check the resolved values in the
+          caller's data.
 
     - name: Read buckets
-      ansible.builtin.command: "{{ _rustfs_state_rc }} ls {{ rustfs_state_alias }} --json"
-      environment: "{{ _rustfs_state_env }}"
-      register: _rustfs_state_ls
-      retries: "{{ rustfs_state_retries }}"
-      delay: "{{ rustfs_state_retry_delay }}"
-      until: _rustfs_state_ls.rc != 3
-      check_mode: false
-      changed_when: false
+      david_igou.rustfs.rustfs_bucket_info:
+        endpoint: "{{ rustfs_state_endpoint }}"
+      register: _rustfs_state_bucket_read
 
     - name: Read policies
-      ansible.builtin.command: "{{ _rustfs_state_rc }} admin policy ls {{ rustfs_state_alias }} --json"
-      environment: "{{ _rustfs_state_env }}"
-      register: _rustfs_state_policy_ls
-      retries: "{{ rustfs_state_retries }}"
-      delay: "{{ rustfs_state_retry_delay }}"
-      until: _rustfs_state_policy_ls.rc != 3
-      check_mode: false
-      changed_when: false
+      david_igou.rustfs.rustfs_policy_info:
+        endpoint: "{{ rustfs_state_endpoint }}"
+      register: _rustfs_state_policy_read
 
     - name: Read users
-      ansible.builtin.command: "{{ _rustfs_state_rc }} admin user ls {{ rustfs_state_alias }} --json"
-      environment: "{{ _rustfs_state_env }}"
-      register: _rustfs_state_user_ls
-      retries: "{{ rustfs_state_retries }}"
-      delay: "{{ rustfs_state_retry_delay }}"
-      until: _rustfs_state_user_ls.rc != 3
-      check_mode: false
-      changed_when: false
+      david_igou.rustfs.rustfs_user_info:
+        endpoint: "{{ rustfs_state_endpoint }}"
+      register: _rustfs_state_user_read
 
     - name: Parse current state
       ansible.builtin.set_fact:
-        _rustfs_state_current_buckets: "{{ (_rustfs_state_ls.stdout | from_json)['items'] | default([]) | map(attribute='key') | list }}"
-        _rustfs_state_current_policies: "{{ (_rustfs_state_policy_ls.stdout | from_json).policies | default([]) }}"
-        _rustfs_state_current_users: "{{ (_rustfs_state_user_ls.stdout | from_json).users | default([]) }}"
+        _rustfs_state_current_buckets: "{{ _rustfs_state_bucket_read.buckets }}"
+        _rustfs_state_current_policies: "{{ _rustfs_state_policy_read.policies }}"
+        _rustfs_state_current_users: "{{ _rustfs_state_user_read.users }}"
 
     - name: Assert managed user policies reference known policy names
       ansible.builtin.assert:
@@ -223,8 +121,8 @@
              | difference(rustfs_state_policies | map(attribute='name') | list
                           + rustfs_state_builtin_policies
                           + _rustfs_state_current_policies) | join(', ') }}.
-          A typo here would otherwise burn the full retry budget inside
-          `rc admin policy attach` and die with a generic error.
+          A typo here would otherwise surface as a generic attach error
+          deep in the reconcile.
 
     - name: Reconcile policies
       ansible.builtin.include_tasks: policy.yml
@@ -261,15 +159,14 @@
         - rustfs_state_user.liveness_bucket is defined
         - rustfs_state_user.secret_key is defined
         - >-
-          rustfs_state_user.name in (_rustfs_state_current_users | map(attribute='accessKey') | list)
+          rustfs_state_user.name in (_rustfs_state_current_users | map(attribute='name') | list)
           or not ansible_check_mode
 
     # Deletion safety: resources on the server but absent from the spec
     # are REPORTED, never deleted. The ignore-list filters the WHOLE
     # accumulated report — including the user:<name>:extra-attachment:<p>
     # entries user.yml appended — from both the report and the
-    # fail_on_unmanaged gate (extra attachments are otherwise permanent:
-    # rc 0.1.x has no detach).
+    # fail_on_unmanaged gate (the role never detaches policies).
     - name: Record unmanaged server-side resources
       vars:
         _rustfs_state_ignored: >-
@@ -281,7 +178,7 @@
               + (_rustfs_state_current_buckets
                  | difference(rustfs_state_buckets | map(attribute='name') | list)
                  | map('regex_replace', '^(.*)$', inventory_hostname ~ ':bucket:\1') | list)
-              + (_rustfs_state_current_users | map(attribute='accessKey') | list
+              + (_rustfs_state_current_users | map(attribute='name') | list
                  | difference(rustfs_state_users | map(attribute='name') | list)
                  | map('regex_replace', '^(.*)$', inventory_hostname ~ ':user:\1') | list)
               + (_rustfs_state_current_policies
@@ -289,14 +186,6 @@
                  | difference(rustfs_state_policies | map(attribute='name') | list)
                  | map('regex_replace', '^(.*)$', inventory_hostname ~ ':policy:\1') | list))
              | difference(_rustfs_state_ignored) }}
-
-  always:
-    - name: Remove working directory (binary, alias store, rendered documents)
-      ansible.builtin.file:
-        path: "{{ _rustfs_state_workdir_result.path }}"
-        state: absent
-      check_mode: false
-      changed_when: false
 
 - name: Report reconcile summary
   ansible.builtin.debug:

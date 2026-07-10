@@ -4,62 +4,39 @@
 #
 # Secret handling (function-style — the role never resolves secrets):
 # - creation uses the RESOLVED `secret_key` provided in the spec; if it is
-#   absent when the user needs creating, the run fails with instructions.
-#   The role never generates credentials.
-# - an EXISTING user's secret is never touched (rc `admin user add` on an
-#   existing access key rotates the secret in place) — rotation is a
-#   deliberate manual act, not a converge side effect.
+#   absent when the user needs creating, the module fails with
+#   instructions. The role never generates credentials.
+# - an EXISTING user's secret is never touched (the rustfs_user module
+#   only rotates with an explicit update_secret opt-in, which the role
+#   never sets) — rotation is a deliberate manual act, not a converge
+#   side effect.
 
 - name: "Compute state for user {{ rustfs_state_user.name }}"
   ansible.builtin.set_fact:
-    _rustfs_state_user_exists: "{{ rustfs_state_user.name in (_rustfs_state_current_users | map(attribute='accessKey') | list) }}"
+    _rustfs_state_user_exists: "{{ rustfs_state_user.name in (_rustfs_state_current_users | map(attribute='name') | list) }}"
     _rustfs_state_user_current_policies: >-
       {{ (_rustfs_state_current_users
-          | selectattr('accessKey', 'equalto', rustfs_state_user.name)
+          | selectattr('name', 'equalto', rustfs_state_user.name)
           | map(attribute='policies') | first) | default([]) }}
 
-- name: "Create user {{ rustfs_state_user.name }}"
+- name: "Reconcile user {{ rustfs_state_user.name }}"
+  david_igou.rustfs.rustfs_user:
+    name: "{{ rustfs_state_user.name }}"
+    secret: "{{ rustfs_state_user.secret_key | default(omit) }}"
+    state: present
+  register: _rustfs_state_user_result
+
+- name: "Record change for user {{ rustfs_state_user.name }}"
   when: not (_rustfs_state_user_exists | bool)
-  block:
-    - name: "Require a resolved secret for user {{ rustfs_state_user.name }}"
-      ansible.builtin.assert:
-        that: rustfs_state_user.secret_key is defined
-        fail_msg: >-
-          User {{ rustfs_state_user.name }} needs to be created on
-          {{ inventory_hostname }} but no secret_key was provided. The
-          role takes resolved credentials only — add the value (e.g. a
-          secret-store lookup expression) to the caller's data.
+  ansible.builtin.set_fact:
+    rustfs_state_changes: "{{ rustfs_state_changes + [inventory_hostname ~ ':user:' ~ rustfs_state_user.name ~ ':create'] }}"
 
-    - name: "Record change for user {{ rustfs_state_user.name }}"
-      ansible.builtin.set_fact:
-        rustfs_state_changes: "{{ rustfs_state_changes + [inventory_hostname ~ ':user:' ~ rustfs_state_user.name ~ ':create'] }}"
-
-    # rc echoes the new user's secret on success — no_log covers it.
-    - name: "Add user {{ rustfs_state_user.name }}"
-      ansible.builtin.command:
-        argv:
-          - "{{ _rustfs_state_rc }}"
-          - admin
-          - user
-          - add
-          - "{{ rustfs_state_alias }}"
-          - "{{ rustfs_state_user.name }}"
-          - "{{ rustfs_state_user.secret_key }}"
-      environment: "{{ _rustfs_state_env }}"
-      register: _rustfs_state_user_add
-      retries: "{{ rustfs_state_retries }}"
-      delay: "{{ rustfs_state_retry_delay }}"
-      until: _rustfs_state_user_add.rc != 3
-      no_log: true
-      changed_when: true
-
-# Server quirk (empirically confirmed on 1.0.0-beta.8): `rc admin policy
-# attach` REPLACES the user's whole policy set with the given list — it is
-# not additive. Attaching only the missing policies would therefore DROP
-# whatever else is attached (and oscillate forever). The role sends the
-# UNION of current + desired: desired policies converge, out-of-band
-# extras survive (deletion safety) and stay visible as extra-attachment
-# reports.
+# Server quirk (empirically confirmed on 1.0.0-beta.8): the attachment
+# primitive REPLACES the user's whole policy set — it is not additive.
+# The rustfs_policy_attachment module therefore reads the current set and
+# writes the UNION of current + desired (exclusive=false): desired
+# policies converge, out-of-band extras survive (deletion safety) and
+# stay visible as extra-attachment reports below.
 - name: "Attach missing policies to user {{ rustfs_state_user.name }}"
   vars:
     _rustfs_state_user_effective_current: "{{ _rustfs_state_user_exists | bool | ternary(_rustfs_state_user_current_policies, []) }}"
@@ -75,20 +52,18 @@
              + [inventory_hostname ~ ':user:' ~ rustfs_state_user.name ~ ':attach:'
                 ~ (_rustfs_state_user_missing_policies | join('+'))] }}
 
+    # Skipped when the user is pending creation in check mode — the
+    # attachment (already recorded above) cannot be probed against a user
+    # that does not exist yet.
     - name: "Attach policies to user {{ rustfs_state_user.name }}"
-      ansible.builtin.command: >-
-        {{ _rustfs_state_rc }} admin policy attach {{ rustfs_state_alias }}
-        {{ (_rustfs_state_user_effective_current + _rustfs_state_user_missing_policies) | unique | join(',') }}
-        --user {{ rustfs_state_user.name }}
-      environment: "{{ _rustfs_state_env }}"
-      register: _rustfs_state_user_attach
-      retries: "{{ rustfs_state_retries }}"
-      delay: "{{ rustfs_state_retry_delay }}"
-      until: _rustfs_state_user_attach.rc != 3
-      changed_when: true
+      david_igou.rustfs.rustfs_policy_attachment:
+        user: "{{ rustfs_state_user.name }}"
+        policies: "{{ rustfs_state_user.policies }}"
+        exclusive: false
+      when: _rustfs_state_user_exists | bool or not ansible_check_mode
 
 # Policies attached on the server but absent from the spec are reported,
-# never detached (rc 0.1.x has no detach subcommand).
+# never detached (the role never uses the module's exclusive mode).
 - name: "Record extra attachments for user {{ rustfs_state_user.name }}"
   vars:
     _rustfs_state_user_extra_policies: >-

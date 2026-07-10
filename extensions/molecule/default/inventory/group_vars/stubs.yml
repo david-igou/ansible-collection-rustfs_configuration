@@ -40,20 +40,19 @@ rustfs_molecule_buckets_base:
   - name: app-backups
     versioning: true
     lifecycle:
-      # import requires an id on every rule; comparison ignores id churn.
+      # Standard S3 API shape (PascalCase). IDs are optional (the module
+      # generates deterministic ones); comparison ignores id churn either
+      # way. One rule keeps an explicit ID to cover both paths.
       rules:
-        - id: 11111111-1111-1111-1111-111111111111
-          status: Enabled
-          prefix: backups/
-          tags:
-            tier: daily
-          noncurrentVersionExpiration:
-            noncurrentDays: 14
-        - id: 22222222-2222-2222-2222-222222222222
-          status: Enabled
-          prefix: backups/
-          noncurrentVersionExpiration:
-            noncurrentDays: 90
+        - ID: 11111111-1111-1111-1111-111111111111
+          Status: Enabled
+          Prefix: backups/
+          NoncurrentVersionExpiration:
+            NoncurrentDays: 14
+        - Status: Enabled
+          Prefix: archive/
+          NoncurrentVersionExpiration:
+            NoncurrentDays: 90
 
 rustfs_state_buckets: "{{ rustfs_molecule_buckets_base }}"
 

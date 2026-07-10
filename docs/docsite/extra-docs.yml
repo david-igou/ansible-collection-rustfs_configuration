@@ -1,0 +1,10 @@
+---
+sections:
+  - title: General
+    toctree:
+      - guide
+      - drift_detection
+      - server_behavior
+  - title: Roles
+    toctree:
+      - rustfs_state_role
