@@ -56,7 +56,7 @@ jobs:
 
   publish-docs-gh-pages:
     # Skip on forks (no Pages / write token to publish to).
-    if: github.repository == 'david-igou/ansible-collection-rustfs_configuration'
+    if: github.repository == 'david-igou/ansible-collection-rustfs'
     permissions:
       contents: write
       pages: write

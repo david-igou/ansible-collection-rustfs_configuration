@@ -245,7 +245,7 @@ Consume as a git source until a Galaxy release exists:
 ```yaml
 # requirements.yml
 collections:
-  - name: https://github.com/david-igou/ansible-collection-rustfs_configuration.git
+  - name: https://github.com/david-igou/ansible-collection-rustfs.git
     type: git
     version: v2.0.0
 ```
