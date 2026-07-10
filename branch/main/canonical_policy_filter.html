@@ -7,7 +7,7 @@
 <meta content="2.24.0" name="antsibull-docs" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>david_igou.rustfs.rustfs_canonical_ilm filter – Canonicalize a RustFS ILM rule list for comparison &mdash; David_Igou.Rustfs Collection  documentation</title>
+  <title>david_igou.rustfs.canonical_policy filter – Canonicalize a RustFS IAM policy document for comparison &mdash; David_Igou.Rustfs Collection  documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=41de9001" />
       <link rel="stylesheet" type="text/css" href="_static/css/ansible.css?v=b54c304f" />
       <link rel="stylesheet" type="text/css" href="_static/antsibull-minimal.css" />
@@ -22,8 +22,8 @@
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="david_igou.rustfs.rustfs_canonical_policy filter – Canonicalize a RustFS IAM policy document for comparison" href="rustfs_canonical_policy_filter.html" />
-    <link rel="prev" title="david_igou.rustfs.rustfs_user_info module – Gather information about IAM users on a RustFS server" href="rustfs_user_info_module.html" /><!-- extra head elements for Ansible beyond RTD Sphinx Theme -->
+    <link rel="next" title="david_igou.rustfs.rustfs_state role – Reconcile one RustFS instance’s in-server state against a declarative spec" href="rustfs_state_role.html" />
+    <link rel="prev" title="david_igou.rustfs.canonical_ilm filter – Canonicalize a RustFS ILM rule list for comparison" href="canonical_ilm_filter.html" /><!-- extra head elements for Ansible beyond RTD Sphinx Theme -->
 
 
 
@@ -82,23 +82,24 @@
 <li class="toctree-l1"><a class="reference internal" href="docsite/rustfs_state_role.html">david_igou.rustfs.rustfs_state role</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="rustfs_bucket_module.html">david_igou.rustfs.rustfs_bucket module – Manage buckets on a RustFS server</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rustfs_bucket_info_module.html">david_igou.rustfs.rustfs_bucket_info module – Gather information about buckets on a RustFS server</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rustfs_bucket_lifecycle_module.html">david_igou.rustfs.rustfs_bucket_lifecycle module – Manage the lifecycle (ILM) configuration of a RustFS bucket</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rustfs_bucket_quota_module.html">david_igou.rustfs.rustfs_bucket_quota module – Manage the hard quota of a RustFS bucket</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rustfs_credential_info_module.html">david_igou.rustfs.rustfs_credential_info module – Verify a credential pair against a RustFS server (liveness)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rustfs_group_module.html">david_igou.rustfs.rustfs_group module – Manage IAM groups on a RustFS server</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rustfs_group_info_module.html">david_igou.rustfs.rustfs_group_info module – Gather information about IAM groups on a RustFS server</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rustfs_policy_module.html">david_igou.rustfs.rustfs_policy module – Manage canned IAM policies on a RustFS server</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rustfs_policy_attachment_module.html">david_igou.rustfs.rustfs_policy_attachment module – Manage the policies attached to a RustFS user or group</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rustfs_policy_info_module.html">david_igou.rustfs.rustfs_policy_info module – Gather information about canned IAM policies on a RustFS server</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rustfs_service_account_module.html">david_igou.rustfs.rustfs_service_account module – Manage service accounts on a RustFS server</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rustfs_service_account_info_module.html">david_igou.rustfs.rustfs_service_account_info module – Gather information about service accounts on a RustFS server</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rustfs_user_module.html">david_igou.rustfs.rustfs_user module – Manage IAM users on a RustFS server</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rustfs_user_info_module.html">david_igou.rustfs.rustfs_user_info module – Gather information about IAM users on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bucket_module.html">david_igou.rustfs.bucket module – Manage buckets on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bucket_info_module.html">david_igou.rustfs.bucket_info module – Gather information about buckets on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bucket_lifecycle_module.html">david_igou.rustfs.bucket_lifecycle module – Manage the lifecycle (ILM) configuration of a RustFS bucket</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bucket_quota_module.html">david_igou.rustfs.bucket_quota module – Manage the hard quota of a RustFS bucket</a></li>
+<li class="toctree-l1"><a class="reference internal" href="credential_info_module.html">david_igou.rustfs.credential_info module – Verify a credential pair against a RustFS server (liveness)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="group_module.html">david_igou.rustfs.group module – Manage IAM groups on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="group_info_module.html">david_igou.rustfs.group_info module – Gather information about IAM groups on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="policy_module.html">david_igou.rustfs.policy module – Manage canned IAM policies on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="policy_attachment_module.html">david_igou.rustfs.policy_attachment module – Manage the policies attached to a RustFS user or group</a></li>
+<li class="toctree-l1"><a class="reference internal" href="policy_info_module.html">david_igou.rustfs.policy_info module – Gather information about canned IAM policies on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="service_account_module.html">david_igou.rustfs.service_account module – Manage service accounts on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="service_account_info_module.html">david_igou.rustfs.service_account_info module – Gather information about service accounts on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_module.html">david_igou.rustfs.user module – Manage IAM users on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_info_module.html">david_igou.rustfs.user_info module – Gather information about IAM users on a RustFS server</a></li>
 </ul>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">david_igou.rustfs.rustfs_canonical_ilm filter – Canonicalize a RustFS ILM rule list for comparison</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="canonical_ilm_filter.html">david_igou.rustfs.canonical_ilm filter – Canonicalize a RustFS ILM rule list for comparison</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">david_igou.rustfs.canonical_policy filter – Canonicalize a RustFS IAM policy document for comparison</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#synopsis">Synopsis</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#input">Input</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a></li>
@@ -108,7 +109,6 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="rustfs_canonical_policy_filter.html">david_igou.rustfs.rustfs_canonical_policy filter – Canonicalize a RustFS IAM policy document for comparison</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="rustfs_state_role.html">david_igou.rustfs.rustfs_state role – Reconcile one RustFS instance’s in-server state against a declarative spec</a></li>
@@ -129,10 +129,10 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">david_igou.rustfs.rustfs_canonical_ilm filter – Canonicalize a RustFS ILM rule list for comparison</li>
+      <li class="breadcrumb-item active">david_igou.rustfs.canonical_policy filter – Canonicalize a RustFS IAM policy document for comparison</li>
       <li class="wy-breadcrumbs-aside">
               <!-- User defined GitHub URL -->
-              <a href="https://github.com/david-igou/ansible-collection-rustfs_configuration/edit/main/plugins/filter/rustfs_canonical_ilm.yml?description=%23%23%23%23%23%20SUMMARY%0A%3C!—%20Your%20description%20here%20–%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr" class="fa fa-github"> Edit on GitHub</a>
+              <a href="https://github.com/david-igou/ansible-collection-rustfs_configuration/edit/main/plugins/filter/canonical_policy.yml?description=%23%23%23%23%23%20SUMMARY%0A%3C!—%20Your%20description%20here%20–%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr" class="fa fa-github"> Edit on GitHub</a>
       </li>
   </ul>
   <hr/>
@@ -142,17 +142,17 @@
   
            <div itemprop="articleBody">
              
-  <span class="target" id="ansible-collections-david-igou-rustfs-rustfs-canonical-ilm-filter"></span><section id="david-igou-rustfs-rustfs-canonical-ilm-filter-canonicalize-a-rustfs-ilm-rule-list-for-comparison">
-<h1>david_igou.rustfs.rustfs_canonical_ilm filter – Canonicalize a RustFS ILM rule list for comparison<a class="headerlink" href="#david-igou-rustfs-rustfs-canonical-ilm-filter-canonicalize-a-rustfs-ilm-rule-list-for-comparison" title="Link to this heading"></a></h1>
+  <span class="target" id="ansible-collections-david-igou-rustfs-canonical-policy-filter"></span><section id="david-igou-rustfs-canonical-policy-filter-canonicalize-a-rustfs-iam-policy-document-for-comparison">
+<h1>david_igou.rustfs.canonical_policy filter – Canonicalize a RustFS IAM policy document for comparison<a class="headerlink" href="#david-igou-rustfs-canonical-policy-filter-canonicalize-a-rustfs-iam-policy-document-for-comparison" title="Link to this heading"></a></h1>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This filter plugin is part of the <a class="reference external" href="https://galaxy.ansible.com/ui/repo/published/david_igou/rustfs/">david_igou.rustfs collection</a> (version 2.0.0).</p>
 <p>It is not included in <code class="docutils literal notranslate"><span class="pre">ansible-core</span></code>.
 To check whether it is installed, run <code class="code docutils literal notranslate"><span class="pre">ansible-galaxy</span> <span class="pre">collection</span> <span class="pre">list</span></code>.</p>
 <p>To install it, use: <code class="code docutils literal notranslate"><span class="pre">ansible-galaxy</span> <span class="pre">collection</span> <span class="pre">install</span> <span class="pre">david_igou.rustfs</span></code>.</p>
-<p>To use it in a playbook, specify: <code class="code docutils literal notranslate"><span class="pre">david_igou.rustfs.rustfs_canonical_ilm</span></code>.</p>
+<p>To use it in a playbook, specify: <code class="code docutils literal notranslate"><span class="pre">david_igou.rustfs.canonical_policy</span></code>.</p>
 </div>
-<p class="ansible-version-added">New in david_igou.rustfs 1.0.0</p>
+<p class="ansible-version-added">New in david_igou.rustfs 2.0.0</p>
 <nav class="contents local" id="contents">
 <ul class="simple">
 <li><p><a class="reference internal" href="#synopsis" id="id1">Synopsis</a></p></li>
@@ -164,14 +164,14 @@ To check whether it is installed, run <code class="code docutils literal notrans
 <section id="synopsis">
 <h2><a class="toc-backref" href="#id1" role="doc-backlink">Synopsis</a><a class="headerlink" href="#synopsis" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p>Strips server-generated rule ids (lowercase <code class="docutils literal notranslate"><span class="pre">id</span></code> — the only casing rc 0.1.x emits) and orders rules deterministically.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">rc</span> <span class="pre">ilm</span> <span class="pre">rule</span> <span class="pre">import</span></code> requires an id on every rule while the server may regenerate them; stripping ids on both sides of a comparison prevents false drift either way.</p></li>
-<li><p>Also drops empty scoping (an empty top-level <code class="docutils literal notranslate"><span class="pre">prefix</span></code> or an empty <code class="docutils literal notranslate"><span class="pre">filter</span></code>) so a whole-bucket rule written with an explicit empty prefix/filter still matches the server’s export, which omits it — a NON-empty filter is left as-is (the server honours only a top-level <code class="docutils literal notranslate"><span class="pre">prefix</span></code>).</p></li>
+<li><p>Sorts <code class="docutils literal notranslate"><span class="pre">Action</span></code>/<code class="docutils literal notranslate"><span class="pre">Resource</span></code> lists inside each statement, drops the empty <code class="docutils literal notranslate"><span class="pre">Condition</span></code>, <code class="docutils literal notranslate"><span class="pre">Sid</span></code> and <code class="docutils literal notranslate"><span class="pre">ID</span></code> fields the server injects on store, and orders statements deterministically.</p></li>
+<li><p>Dropping the empty boilerplate is what lets a from-scratch policy document (naturally written without <code class="docutils literal notranslate"><span class="pre">ID</span></code>/<code class="docutils literal notranslate"><span class="pre">Sid</span></code>/<code class="docutils literal notranslate"><span class="pre">Condition</span></code>) converge to steady state instead of re-applying <code class="docutils literal notranslate"><span class="pre">update</span></code> every run.</p></li>
+<li><p>RustFS returns policy arrays in a different order on every call (they are stored as sets); passing both sides of a comparison through this filter prevents false drift.</p></li>
 </ul>
 </section>
 <section id="input">
 <h2><a class="toc-backref" href="#id2" role="doc-backlink">Input</a><a class="headerlink" href="#input" title="Link to this heading"></a></h2>
-<p>This describes the input of the filter, the value before <code class="docutils literal notranslate"><span class="pre">|</span> <span class="pre">david_igou.rustfs.rustfs_canonical_ilm</span></code>.</p>
+<p>This describes the input of the filter, the value before <code class="docutils literal notranslate"><span class="pre">|</span> <span class="pre">david_igou.rustfs.canonical_policy</span></code>.</p>
 <table class="longtable ansible-option-table docutils align-default" style="width: 100%">
 <thead>
 <tr class="row-odd"><th class="head"><p>Parameter</p></th>
@@ -180,10 +180,10 @@ To check whether it is installed, run <code class="code docutils literal notrans
 </thead>
 <tbody>
 <tr class="row-even"><td><div class="ansible-option-cell">
-<div class="ansibleOptionAnchor" id="parameter-_input"></div><p class="ansible-option-title" id="ansible-collections-david-igou-rustfs-rustfs-canonical-ilm-filter-parameter-input"><strong>Input</strong></p>
-<a class="ansibleOptionLink" href="#parameter-_input" title="Permalink to this option"></a><p class="ansible-option-type-line"><span class="ansible-option-type">list</span> / <span class="ansible-option-elements">elements=dictionary</span> / <span class="ansible-option-required">required</span></p>
+<div class="ansibleOptionAnchor" id="parameter-_input"></div><p class="ansible-option-title" id="ansible-collections-david-igou-rustfs-canonical-policy-filter-parameter-input"><strong>Input</strong></p>
+<a class="ansibleOptionLink" href="#parameter-_input" title="Permalink to this option"></a><p class="ansible-option-type-line"><span class="ansible-option-type">dictionary</span> / <span class="ansible-option-required">required</span></p>
 </div></td>
-<td><div class="ansible-option-cell"><p>ILM rule list, as exported by <code class="docutils literal notranslate"><span class="pre">rc</span> <span class="pre">ilm</span> <span class="pre">rule</span> <span class="pre">export</span></code>.</p>
+<td><div class="ansible-option-cell"><p>IAM policy document.</p>
 </div></td>
 </tr>
 </tbody>
@@ -191,11 +191,11 @@ To check whether it is installed, run <code class="code docutils literal notrans
 </section>
 <section id="examples">
 <h2><a class="toc-backref" href="#id3" role="doc-backlink">Examples</a><a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
-<div class="highlight-yaml+jinja notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Compare live lifecycle rules against the spec</span>
+<div class="highlight-yaml+jinja notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Compare a live policy against the spec</span>
 <span class="w">  </span><span class="nt">ansible.builtin.set_fact</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">matches</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
-<span class="w">      </span><span class="cp">{{</span> <span class="o">(</span><span class="nv">live_rules</span> <span class="o">|</span> <span class="nf">david_igou</span><span class="nv">.rustfs.rustfs_canonical_ilm</span><span class="o">)</span>
-         <span class="o">==</span> <span class="o">(</span><span class="nv">spec_rules</span> <span class="o">|</span> <span class="nf">david_igou</span><span class="nv">.rustfs.rustfs_canonical_ilm</span><span class="o">)</span> <span class="cp">}}</span>
+<span class="w">      </span><span class="cp">{{</span> <span class="o">(</span><span class="nv">live_doc</span> <span class="o">|</span> <span class="nf">david_igou</span><span class="nv">.rustfs.canonical_policy</span><span class="o">)</span>
+         <span class="o">==</span> <span class="o">(</span><span class="nv">spec_doc</span> <span class="o">|</span> <span class="nf">david_igou</span><span class="nv">.rustfs.canonical_policy</span><span class="o">)</span> <span class="cp">}}</span>
 </pre></div>
 </div>
 </section>
@@ -209,10 +209,10 @@ To check whether it is installed, run <code class="code docutils literal notrans
 </thead>
 <tbody>
 <tr class="row-even"><td><div class="ansible-option-cell">
-<div class="ansibleOptionAnchor" id="return-_value"></div><p class="ansible-option-title" id="ansible-collections-david-igou-rustfs-rustfs-canonical-ilm-filter-return-value"><strong>Return value</strong></p>
-<a class="ansibleOptionLink" href="#return-_value" title="Permalink to this return value"></a><p class="ansible-option-type-line"><span class="ansible-option-type">list</span> / <span class="ansible-option-elements">elements=string</span></p>
+<div class="ansibleOptionAnchor" id="return-_value"></div><p class="ansible-option-title" id="ansible-collections-david-igou-rustfs-canonical-policy-filter-return-value"><strong>Return value</strong></p>
+<a class="ansibleOptionLink" href="#return-_value" title="Permalink to this return value"></a><p class="ansible-option-type-line"><span class="ansible-option-type">dictionary</span></p>
 </div></td>
-<td><div class="ansible-option-cell"><p>The canonicalized rule list.</p>
+<td><div class="ansible-option-cell"><p>The canonicalized policy document.</p>
 <p class="ansible-option-line"><strong class="ansible-option-returned-bold">Returned:</strong> success</p>
 </div></td>
 </tr>
@@ -236,8 +236,8 @@ To check whether it is installed, run <code class="code docutils literal notrans
           
 
 <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="rustfs_user_info_module.html" class="btn btn-neutral float-left" title="david_igou.rustfs.rustfs_user_info module – Gather information about IAM users on a RustFS server" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="rustfs_canonical_policy_filter.html" class="btn btn-neutral float-right" title="david_igou.rustfs.rustfs_canonical_policy filter – Canonicalize a RustFS IAM policy document for comparison" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="canonical_ilm_filter.html" class="btn btn-neutral float-left" title="david_igou.rustfs.canonical_ilm filter – Canonicalize a RustFS ILM rule list for comparison" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rustfs_state_role.html" class="btn btn-neutral float-right" title="david_igou.rustfs.rustfs_state role – Reconcile one RustFS instance’s in-server state against a declarative spec" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
