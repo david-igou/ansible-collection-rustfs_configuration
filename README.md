@@ -19,17 +19,17 @@ deliberately out of scope.
 | Content | Purpose |
 |---|---|
 | role `rustfs_state` | Reconcile ONE instance's state against a declarative per-host spec |
-| `rustfs_bucket` / `rustfs_bucket_info` | Bucket existence + versioning |
-| `rustfs_bucket_lifecycle` | The bucket's whole ILM ruleset (full-replace, canonical comparison) |
-| `rustfs_bucket_quota` | Hard size quota |
-| `rustfs_policy` / `rustfs_policy_info` | Canned IAM policies (canonical comparison) |
-| `rustfs_user` / `rustfs_user_info` | IAM users (secret rotation only by explicit opt-in) |
-| `rustfs_group` / `rustfs_group_info` | IAM groups + membership |
-| `rustfs_service_account` / `rustfs_service_account_info` | Scoped service accounts |
-| `rustfs_policy_attachment` | Policies attached to a user/group (union or exclusive) |
-| `rustfs_credential_info` | Credential liveness probe (authentication vs authorization) |
-| filter `rustfs_canonical_policy` | Canonical IAM-policy comparison (server ordering is unstable) |
-| filter `rustfs_canonical_ilm` | Canonical ILM-rule comparison (id/scoping/date churn absorbed) |
+| `bucket` / `bucket_info` | Bucket existence + versioning |
+| `bucket_lifecycle` | The bucket's whole ILM ruleset (full-replace, canonical comparison) |
+| `bucket_quota` | Hard size quota |
+| `policy` / `policy_info` | Canned IAM policies (canonical comparison) |
+| `user` / `user_info` | IAM users (secret rotation only by explicit opt-in) |
+| `group` / `group_info` | IAM groups + membership |
+| `service_account` / `service_account_info` | Scoped service accounts |
+| `policy_attachment` | Policies attached to a user/group (union or exclusive) |
+| `credential_info` | Credential liveness probe (authentication vs authorization) |
+| filter `canonical_policy` | Canonical IAM-policy comparison (server ordering is unstable) |
+| filter `canonical_ilm` | Canonical ILM-rule comparison (id/scoping/date churn absorbed) |
 
 All modules share one connection interface (`endpoint`, `access_key`,
 `secret_key`, TLS/retry options — also injectable via `RUSTFS_*`
@@ -162,7 +162,7 @@ deletions) is available as raw modules:
 
 ```yaml
 - name: Scoped service account for velero
-  david_igou.rustfs.rustfs_service_account:
+  david_igou.rustfs.service_account:
     endpoint: https://nas.example.net:20292
     access_key: "{{ admin_ak }}"
     secret_key: "{{ admin_sk }}"
@@ -196,7 +196,7 @@ module_defaults:
 | `rustfs_state_alias` (+ charset asserts) | removed (no alias concept) |
 | `lifecycle.rules` in rc-export shape (lowercase `id`, `prefix`, `expiration.days`) | standard S3 API shape (`ID` optional, `Prefix`, `Expiration.Days`, PascalCase) |
 | controller needs the rc tarball / a baked binary | controller/EE needs **botocore** |
-| `rustfs_canonical_ilm` filter expects lowercase keys | accepts both shapes |
+| `canonical_ilm` filter expects lowercase keys | accepts both shapes |
 | — | new: `rustfs_state_ca_bundle` for private CAs |
 
 Report strings, `set_stats` names, gates, and the rest of the
@@ -231,7 +231,7 @@ list. Two operational notes:
 - **Verify authorization scope, not just liveness.** The role's liveness check
   proves a credential *authenticates* and can list its liveness bucket; it
   does not prove the policy grants every right verb. To audit a service
-  account, probe each bucket with `rustfs_credential_info` (per-bucket
+  account, probe each bucket with `credential_info` (per-bucket
   `bucket_listable`) or exercise the verbs with any S3 client.
 - **Readable output at estate scale.** A full converge fans out into many
   tasks; the signal is the end-of-role summary. `ANSIBLE_STDOUT_CALLBACK=yaml`

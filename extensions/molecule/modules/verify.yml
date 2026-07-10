@@ -1,0 +1,71 @@
+---
+# Final-state verification, independent of the converge's own registers:
+# read the server back fresh and confirm every walk left exactly the
+# state it claimed — removed things gone, kept things present — plus the
+# one filesystem-level check the default scenario also uses (buckets are
+# directories under /data on the single-node layout).
+- name: Verify
+  hosts: stubs
+  gather_facts: false
+  module_defaults:
+    group/david_igou.rustfs.rustfs:
+      endpoint: "{{ rustfs_endpoint }}"
+      access_key: "{{ rustfs_molecule_admin_access_key }}"
+      secret_key: "{{ rustfs_molecule_admin_secret_key }}"
+  tasks:
+    - name: Read final bucket list
+      david_igou.rustfs.bucket_info:
+      register: _final_buckets
+
+    - name: Read final user list
+      david_igou.rustfs.user_info:
+      register: _final_users
+
+    # Tolerates NotImplemented: the beta-8 group API is stubbed server-side.
+    - name: Read final group list
+      david_igou.rustfs.group_info:
+      register: _final_groups
+      failed_when: >-
+        _final_groups.failed | default(false)
+        and 'NotImplemented' not in (_final_groups.msg | default(''))
+
+    - name: Read final policy list
+      david_igou.rustfs.policy_info:
+      register: _final_policies
+
+    - name: Read final service accounts
+      david_igou.rustfs.service_account_info:
+      register: _final_sas
+
+    - name: Assert the walks left exactly the state they claimed
+      ansible.builtin.assert:
+        that:
+          # deleted: unversioned bucket, bob, the group, temp-policy, the SA
+          - "'quota-bucket' not in _final_buckets.buckets"
+          - "'bob-user' not in (_final_users.users | map(attribute='name') | list)"
+          - "'developers' not in (_final_groups.groups | default([]))"
+          - "'temp-policy' not in _final_policies.policies"
+          - _final_sas.service_accounts | selectattr('access_key', 'equalto', 'svc-velero') | list | length == 0
+          - "'versioned-keeper' not in _final_buckets.buckets"
+          # kept: the scope fixtures, alice/scoped users
+          - "'app-scope' in _final_buckets.buckets"
+          - "'scoped-rw' in _final_policies.policies"
+          - "'alice-user' in (_final_users.users | map(attribute='name') | list)"
+          - "'scoped-user' in (_final_users.users | map(attribute='name') | list)"
+        fail_msg: >-
+          final state wrong: buckets={{ _final_buckets.buckets }}
+          users={{ _final_users.users | map(attribute='name') | list }}
+          groups={{ _final_groups.groups }}
+          policies={{ _final_policies.policies }}
+
+    - name: Read server-side bucket directories
+      ansible.builtin.command: podman exec rustfs-server-modules ls /data
+      register: _server_buckets
+      changed_when: false
+
+    - name: Assert the filesystem agrees (independent of every module)
+      ansible.builtin.assert:
+        that:
+          - "'app-scope' in _server_buckets.stdout_lines"
+          - "'versioned-keeper' not in _server_buckets.stdout_lines"
+          - "'quota-bucket' not in _server_buckets.stdout_lines"

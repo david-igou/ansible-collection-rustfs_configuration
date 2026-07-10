@@ -10,14 +10,21 @@ requests. No binary is downloaded or shelled out to anywhere.
 
 New content:
 
-- Modules (state): `rustfs_bucket`, `rustfs_bucket_lifecycle`,
-  `rustfs_bucket_quota`, `rustfs_policy`, `rustfs_user`, `rustfs_group`,
-  `rustfs_service_account`, `rustfs_policy_attachment` — all with native
+- Module and filter names are unprefixed (`david_igou.rustfs.bucket`, not
+  `...rustfs_bucket`) - the modern convention for product-named collections
+  (microsoft.ad, vmware.vmware, amazon.aws's own de-prefixing): the FQCN
+  already carries the product name. Filters renamed accordingly:
+  `rustfs_canonical_policy`/`rustfs_canonical_ilm` are now
+  `canonical_policy`/`canonical_ilm`. The role stays `rustfs_state` (its
+  `rustfs_state_*` variable namespace is stable API).
+- Modules (state): `bucket`, `bucket_lifecycle`,
+  `bucket_quota`, `policy`, `user`, `group`,
+  `service_account`, `policy_attachment` — all with native
   check-mode and `--diff` support, read-first reconcile, canonical
   comparison, and transport-only retries.
-- Modules (info): `rustfs_bucket_info`, `rustfs_policy_info`,
-  `rustfs_user_info`, `rustfs_group_info`, `rustfs_service_account_info`,
-  `rustfs_credential_info` (liveness — distinguishes authentication from
+- Modules (info): `bucket_info`, `policy_info`,
+  `user_info`, `group_info`, `service_account_info`,
+  `credential_info` (liveness — distinguishes authentication from
   authorization, which rc's exit codes lumped together).
 - `module_utils/rustfs.py` (shared clients, error taxonomy, retry) and
   `module_utils/canonical.py` (single source of canonicalization, shared
@@ -32,8 +39,8 @@ Breaking changes (role spec):
 
 - **The collection is renamed `david_igou.rustfs`** (was
   `david_igou.rustfs_configuration`): every FQCN changes —
-  `david_igou.rustfs.rustfs_state`, `david_igou.rustfs.rustfs_bucket`,
-  filter `david_igou.rustfs.rustfs_canonical_policy`, action group
+  `david_igou.rustfs.rustfs_state`, `david_igou.rustfs.bucket`,
+  filter `david_igou.rustfs.canonical_policy`, action group
   `group/david_igou.rustfs.rustfs`. Update `requirements.yml` and any
   playbook references; checkouts belong at
   `ansible_collections/david_igou/rustfs`.
@@ -43,12 +50,38 @@ Breaking changes (role spec):
 - `lifecycle.rules` moves from the rc-export JSON shape (lowercase `id`,
   `prefix`, `expiration.days`) to the standard S3 API shape (`ID`
   optional — deterministic IDs are generated — `Prefix`,
-  `Expiration.Days`, PascalCase). The `rustfs_canonical_ilm` filter
+  `Expiration.Days`, PascalCase). The `canonical_ilm` filter
   accepts both shapes.
 - New runtime dependency **botocore** on the python executing the modules
   (for connection-local stubs: the controller/EE). The rc binary
   download/bake is gone.
 - New `rustfs_state_ca_bundle` for private-CA endpoints.
+
+Test suite (from a dedicated meaningfulness audit of units + e2e):
+
+- Per-module unit tests pin the pure decision logic e2e only exercises
+  coarsely: the credential probe's authentication-vs-authorization
+  verdicts, bucket versioning's unconfigured==suspended tri-state,
+  attachment union/exclusive set math, group append-vs-replace membership
+  math, user create/rotate/status interplay, and deterministic lifecycle
+  rule-ID generation. module_utils additions cover the transport-error →
+  retryable mapping, TLS verify/CA plumbing on both planes, retry backoff
+  timing, the service-account policy-as-JSON-string serde, and the
+  500-as-not-found handling across every admin reader.
+- The molecule `default` scenario's spec grew into a small estate (four
+  buckets covering all three lifecycle shapes — noncurrent expiry,
+  current-object `Expiration.Days`, `Date`-based — with versioning mix,
+  three scoped policies, two users), and verify now reads the server back
+  through an independent tool (the rc CLI the side-effect phase installs)
+  after each drift repair, plus a real authorization round-trip: an
+  object PUT with the managed user's credentials, confirmed on the
+  server's disk.
+- A new molecule `modules` scenario walks the raw-module surface the role
+  deliberately never touches: quotas, groups, service accounts (including
+  the no-update-endpoint no-op), exclusive attachments (detach), user
+  status/secret rotation, bucket deletion (and the versioned-undeletable
+  quirk), deleting an attached policy (the 500 detach-first quirk), and
+  the authorization-denied credential verdict.
 
 Unchanged (stable API): report strings, `set_stats` names, gate order and
 semantics, deletion safety, and the rest of the `rustfs_state_*` spec.

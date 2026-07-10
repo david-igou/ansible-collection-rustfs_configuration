@@ -282,3 +282,149 @@ def test_classify_s3_exception_endpoint_error_is_network():
 
     exc = EndpointConnectionError(endpoint_url="http://x")
     assert rustfs.classify_s3_exception(exc).__class__ is RustfsNetworkError
+
+
+# -- audit additions: transport mapping, TLS plumbing, serde gaps ----------------
+
+
+def test_request_maps_urlerror_to_network_error(monkeypatch):
+    """Connection-level failures must be RETRYABLE - a URLError that is not
+    classified as network would break the whole retry contract."""
+    from ansible.module_utils.six.moves.urllib.error import URLError
+
+    calls = []
+
+    def fake_open_url(url, **kwargs):
+        calls.append(1)
+        if len(calls) < 2:
+            raise URLError("connection refused")
+        return io.BytesIO(b"{}")
+
+    monkeypatch.setattr(rustfs, "open_url", fake_open_url)
+    assert RustfsAdminClient(FakeModule()).list_policies() == {}
+    assert len(calls) == 2  # retried through retry_call
+
+
+def test_admin_request_passes_ca_and_verify(monkeypatch):
+    captured = {}
+
+    def fake_open_url(url, **kwargs):
+        captured.update(kwargs)
+        return io.BytesIO(b"{}")
+
+    monkeypatch.setattr(rustfs, "open_url", fake_open_url)
+    RustfsAdminClient(
+        FakeModule(dict(ca_bundle="/etc/pki/custom.pem", validate_certs=False))
+    ).list_policies()
+    assert captured["ca_path"] == "/etc/pki/custom.pem"
+    assert captured["validate_certs"] is False
+
+
+def test_get_uses_no_content_type(monkeypatch):
+    """content-type must be present ONLY when a body is sent (the admin API
+    request contract) - the GET side of that contract."""
+    captured = {}
+
+    def fake_open_url(url, **kwargs):
+        captured.update(kwargs)
+        return io.BytesIO(b"{}")
+
+    monkeypatch.setattr(rustfs, "open_url", fake_open_url)
+    RustfsAdminClient(FakeModule()).list_policies()
+    assert "content-type" not in set(k.lower() for k in captured["headers"])
+
+
+def test_s3_client_verify_prefers_ca_bundle(monkeypatch):
+    captured = {}
+
+    class FakeSession(object):
+        def create_client(self, service, **kwargs):
+            captured.update(kwargs)
+            return object()
+
+    fake_session = FakeSession()
+    monkeypatch.setattr(rustfs.botocore.session, "get_session", lambda: fake_session)
+    rustfs.s3_client(FakeModule(dict(ca_bundle="/etc/pki/custom.pem", validate_certs=True)))
+    assert captured["verify"] == "/etc/pki/custom.pem"
+    rustfs.s3_client(FakeModule(dict(ca_bundle=None, validate_certs=False)))
+    assert captured["verify"] is False
+
+
+def test_create_service_account_serializes_policy_and_optional_keys(monkeypatch):
+    captured = {}
+
+    def fake_open_url(url, **kwargs):
+        captured.update(kwargs)
+        return io.BytesIO(b"")
+
+    monkeypatch.setattr(rustfs, "open_url", fake_open_url)
+    RustfsAdminClient(FakeModule()).create_service_account(
+        "svc", "s3cret",
+        policy={"Version": "2012-10-17"},
+        name="friendly",
+        description="desc",
+        expiration="2027-01-01T00:00:00Z",
+    )
+    body = json.loads(captured["data"])
+    # policy travels as a JSON STRING inside the JSON body (server contract).
+    assert isinstance(body["policy"], str)
+    assert json.loads(body["policy"]) == {"Version": "2012-10-17"}
+    assert body["name"] == "friendly"
+    assert body["description"] == "desc"
+    assert body["expiration"] == "2027-01-01T00:00:00Z"
+
+    RustfsAdminClient(FakeModule()).create_service_account("svc", "s3cret")
+    body = json.loads(captured["data"])
+    assert "policy" not in body and "name" not in body and "description" not in body
+
+
+def test_retry_call_sleeps_between_attempts(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr(rustfs.time, "sleep", sleeps.append)
+    params = dict(PARAMS, retries=3, retry_delay=5)
+
+    def dead():
+        raise RustfsNetworkError("refused")
+
+    with pytest.raises(RustfsNetworkError):
+        retry_call(params, dead)
+    assert sleeps == [5, 5]  # attempts-1 sleeps of retry_delay
+
+
+def test_retry_call_floors_retries_at_one():
+    calls = []
+
+    def once():
+        calls.append(1)
+        return "ok"
+
+    assert retry_call(dict(PARAMS, retries=0), once) == "ok"
+    assert len(calls) == 1
+
+
+def test_get_group_splits_singular_policy_key(monkeypatch):
+    """The group endpoint uses a SINGULAR `policy` key (unlike users'
+    `policyName`) - a divergence worth pinning."""
+
+    def fake_open_url(url, **kwargs):
+        return io.BytesIO(json.dumps(
+            {"name": "devs", "policy": "a,b", "members": ["u"], "status": "enabled"}
+        ).encode())
+
+    monkeypatch.setattr(rustfs, "open_url", fake_open_url)
+    info = RustfsAdminClient(FakeModule()).get_group("devs")
+    assert info["policies"] == ["a", "b"]
+
+
+@pytest.mark.parametrize("getter,args", [
+    ("get_user", ("app",)),
+    ("get_group", ("devs",)),
+    ("get_service_account", ("svc",)),
+    ("get_bucket_quota", ("b",)),
+])
+def test_all_getters_treat_500_does_not_exist_as_missing(monkeypatch, getter, args):
+    def fake_open_url(url, **kwargs):
+        raise http_error(500, b"thing does not exist")
+
+    monkeypatch.setattr(rustfs, "open_url", fake_open_url)
+    assert getattr(RustfsAdminClient(FakeModule()), getter)(*args) is None

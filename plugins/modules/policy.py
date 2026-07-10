@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-module: rustfs_policy
+module: policy
 short_description: Manage canned IAM policies on a RustFS server
 description:
   - Create, update, or remove canned IAM policies via the RustFS admin
@@ -34,7 +34,7 @@ options:
       - Whether the policy should exist.
       - Removing a policy that is still attached to a user or group fails
         on the server side (RustFS 1.0.0-beta.8 returns HTTP 500) - detach
-        it first with M(david_igou.rustfs.rustfs_policy_attachment).
+        it first with M(david_igou.rustfs.policy_attachment).
     type: str
     choices:
       - present
@@ -51,7 +51,7 @@ author:
 
 EXAMPLES = r"""
 - name: Create an app read-write policy
-  david_igou.rustfs.rustfs_policy:
+  david_igou.rustfs.policy:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -70,7 +70,7 @@ EXAMPLES = r"""
             - arn:aws:s3:::backups/*
 
 - name: Remove a policy
-  david_igou.rustfs.rustfs_policy:
+  david_igou.rustfs.policy:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret

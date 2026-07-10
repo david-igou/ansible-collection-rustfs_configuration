@@ -10,7 +10,7 @@ profile: production
 # nothing else to lint; exclude them.
 #
 # offline is deliberately OFF (a break from the other david_igou
-# collections): the role's tasks call this collection's own rustfs_*
+# collections): the role's tasks call this collection's own
 # modules by FQCN, and lint's syntax-check can only resolve those after
 # ansible-lint self-installs the collection under test into the project
 # .ansible/ cache — which offline mode skips (leaving .ansible/collections
@@ -23,3 +23,5 @@ exclude_paths:
   - .github/
   - extensions/molecule/default/create.yml
   - extensions/molecule/default/destroy.yml
+  - extensions/molecule/modules/create.yml
+  - extensions/molecule/modules/destroy.yml

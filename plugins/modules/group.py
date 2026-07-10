@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-module: rustfs_group
+module: group
 short_description: Manage IAM groups on a RustFS server
 description:
   - Create, remove, enable/disable IAM groups and reconcile their
@@ -58,7 +58,7 @@ author:
 
 EXAMPLES = r"""
 - name: Create a group with two members
-  david_igou.rustfs.rustfs_group:
+  david_igou.rustfs.group:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -68,7 +68,7 @@ EXAMPLES = r"""
       - bob
 
 - name: Add a member without removing the others
-  david_igou.rustfs.rustfs_group:
+  david_igou.rustfs.group:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -78,7 +78,7 @@ EXAMPLES = r"""
     append: true
 
 - name: Remove the group
-  david_igou.rustfs.rustfs_group:
+  david_igou.rustfs.group:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret

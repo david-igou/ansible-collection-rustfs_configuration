@@ -1,4 +1,4 @@
-# Runtime dependency of the collection's rustfs_* modules: S3-plane calls
+# Runtime dependency of the collection's modules: S3-plane calls
 # and SigV4 signing for the admin REST API. Installed on the module's
 # execution python (the controller/EE for connection-local stub hosts).
 botocore

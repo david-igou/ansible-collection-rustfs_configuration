@@ -58,26 +58,26 @@ compare canonically on both sides so none of this produces false drift:
   (``2026-01-01`` in your spec vs. the datetime the server returns).
 
 The same canonicalization is exposed as the
-``david_igou.rustfs.rustfs_canonical_policy`` and
-``david_igou.rustfs.rustfs_canonical_ilm`` filters.
+``david_igou.rustfs.canonical_policy`` and
+``david_igou.rustfs.canonical_ilm`` filters.
 
 Behaviors worth knowing when using the modules directly
 -------------------------------------------------------
 
 * **Policy attachment is a full replace.** The server's only attachment
   primitive replaces the whole set, and there is no detach endpoint.
-  :ansplugin:`david_igou.rustfs.rustfs_policy_attachment#module`
+  :ansplugin:`david_igou.rustfs.policy_attachment#module`
   defaults to the safe union (nothing is ever detached); pass
   ``exclusive: true`` to make the set exactly what you list — which is
   how detaching works on this server.
 * **Re-adding a user rotates its secret in place.**
-  :ansplugin:`david_igou.rustfs.rustfs_user#module` therefore never
+  :ansplugin:`david_igou.rustfs.user#module` therefore never
   re-sends an existing user's secret unless you opt in with
   ``update_secret: true``.
 * **A policy still attached to a user or group cannot be deleted**
   (the server answers HTTP 500) — detach first, then remove.
 * **Versioned buckets are undeletable** on beta-8;
-  ``rustfs_bucket`` with ``state: absent`` surfaces that as a clear
+  ``bucket`` with ``state: absent`` surfaces that as a clear
   error instead of a generic failure.
 * **Missing canned policies answer HTTP 500** ("policy does not
   exist"), not 404 — the modules normalize this to not-found, so a
@@ -86,7 +86,7 @@ Behaviors worth knowing when using the modules directly
   change a policy or expiration, remove and recreate the account.
 * **Lifecycle configuration is replaced whole.** There is no per-rule
   editing anywhere in the stack;
-  :ansplugin:`david_igou.rustfs.rustfs_bucket_lifecycle#module` treats
+  :ansplugin:`david_igou.rustfs.bucket_lifecycle#module` treats
   your ``rules`` list as the entire configuration, and
   ``state: absent`` removes the whole configuration.
 

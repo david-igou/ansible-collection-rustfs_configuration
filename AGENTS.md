@@ -14,7 +14,7 @@ deployment is out of scope by design.
   retry wrapper
 - `plugins/module_utils/canonical.py` — canonical policy/ILM comparison
   (single source of truth; the filter plugin delegates here)
-- `plugins/modules/rustfs_*.py` — 14 modules (8 state + 6 info), all under
+- `plugins/modules/*.py` — 14 modules (8 state + 6 info), all under
   the `rustfs` action group (meta/runtime.yml)
 - `roles/rustfs_state/` — the one role (per-host instance stubs;
   `inventory_hostname` = report prefix). Connection params flow to modules
@@ -36,7 +36,7 @@ deployment is out of scope by design.
 - Deletion safety (ROLE): nothing on the server is ever deleted; unmanaged =
   report (+ opt-in gate). The modules DO expose `state: absent` /
   `exclusive:` — the role must never use them.
-- `rustfs_user` never rotates an existing secret without `update_secret`.
+- `user` never rotates an existing secret without `update_secret`.
 - Retries: transport-level failures only (module_utils `retry_call`);
   permanent errors fail fast. Never reintroduce exit-code/string matching.
 - Report strings + `set_stats` fact names are stable API (semver-major to

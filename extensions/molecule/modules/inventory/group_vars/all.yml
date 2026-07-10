@@ -1,0 +1,8 @@
+---
+# Scenario-wide literals (resolved credentials by contract, same as prod).
+rustfs_molecule_admin_access_key: molecule-admin
+rustfs_molecule_admin_secret_key: molecule-admin-secret-key
+rustfs_molecule_alice_secret: molecule-alice-secret-key
+rustfs_molecule_bob_secret: molecule-bob-secret-key
+rustfs_molecule_scoped_secret: molecule-scoped-secret-key
+rustfs_molecule_svc_secret: molecule-svc-secret-key

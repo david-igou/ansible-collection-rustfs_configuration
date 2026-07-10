@@ -31,6 +31,31 @@ rustfs_state_policies:
             - s3:ListMultipartUploadParts
           Resource:
             - arn:aws:s3:::app-data/*
+  # Estate pattern (README): each bucket gets its own scoped policy.
+  - name: logs-rw
+    document:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Action:
+            - s3:ListBucket
+            - s3:GetObject
+            - s3:PutObject
+            - s3:DeleteObject
+          Resource:
+            - arn:aws:s3:::app-logs
+            - arn:aws:s3:::app-logs/*
+  - name: archive-ro
+    document:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Action:
+            - s3:ListBucket
+            - s3:GetObject
+          Resource:
+            - arn:aws:s3:::app-archive
+            - arn:aws:s3:::app-archive/*
 
 # Named base so verify.yml can compose spec variants without recursive
 # self-reference.
@@ -53,6 +78,25 @@ rustfs_molecule_buckets_base:
           Prefix: archive/
           NoncurrentVersionExpiration:
             NoncurrentDays: 90
+  # Non-versioned logs bucket: CURRENT-object expiry (Expiration.Days) —
+  # the README's "logs bucket" shape, distinct from noncurrent expiry.
+  - name: app-logs
+    versioning: false
+    lifecycle:
+      rules:
+        - Status: Enabled
+          Expiration:
+            Days: 14
+  # Versioned archive bucket: Date-based expiry on a prefix — covers the
+  # Date canonicalization path (datetime vs string) against a live server.
+  - name: app-archive
+    versioning: true
+    lifecycle:
+      rules:
+        - Status: Enabled
+          Prefix: cold/
+          Expiration:
+            Date: "2030-01-01T00:00:00Z"
 
 rustfs_state_buckets: "{{ rustfs_molecule_buckets_base }}"
 
@@ -62,3 +106,9 @@ rustfs_state_users:
       - app-rw
     secret_key: "{{ rustfs_molecule_user_secret_key }}"
     liveness_bucket: app-data
+  # Second user with a distinct policy set: multi-user attach coverage.
+  - name: log-writer
+    policies:
+      - logs-rw
+    secret_key: "{{ rustfs_molecule_writer_secret_key }}"
+    liveness_bucket: app-logs

@@ -3,32 +3,29 @@
 """Canonicalization filters for comparing RustFS state.
 
 Thin public wrappers: the single source of truth lives in
-module_utils/canonical.py, shared with the rustfs_* modules so filter
-and module comparisons can never diverge.
+module_utils/canonical.py, shared with the collection's modules so
+filter and module comparisons can never diverge.
 """
 
 from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
-from ansible_collections.david_igou.rustfs.plugins.module_utils.canonical import (
-    canonical_lifecycle_rules,
-    canonical_policy,
-)
+from ansible_collections.david_igou.rustfs.plugins.module_utils import canonical
 
 
-def rustfs_canonical_policy(doc):
+def canonical_policy(doc):
     """Canonicalize an IAM policy document for comparison."""
-    return canonical_policy(doc)
+    return canonical.canonical_policy(doc)
 
 
-def rustfs_canonical_ilm(rules):
+def canonical_ilm(rules):
     """Canonicalize an ILM rule list for comparison.
 
-    Accepts both the S3 API shape (PascalCase - what the rustfs_* modules
-    speak) and the legacy rc-export shape (lowercase keys).
+    Accepts both the S3 API shape (PascalCase - what the collection's
+    modules speak) and the legacy rc-export shape (lowercase keys).
     """
-    return canonical_lifecycle_rules(rules)
+    return canonical.canonical_lifecycle_rules(rules)
 
 
 class FilterModule(object):
@@ -36,6 +33,6 @@ class FilterModule(object):
 
     def filters(self):
         return {
-            "rustfs_canonical_policy": rustfs_canonical_policy,
-            "rustfs_canonical_ilm": rustfs_canonical_ilm,
+            "canonical_policy": canonical_policy,
+            "canonical_ilm": canonical_ilm,
         }

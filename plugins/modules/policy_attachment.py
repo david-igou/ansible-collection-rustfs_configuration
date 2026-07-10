@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-module: rustfs_policy_attachment
+module: policy_attachment
 short_description: Manage the policies attached to a RustFS user or group
 description:
   - Reconcile the set of canned policies attached to an IAM user or group
@@ -55,7 +55,7 @@ author:
 
 EXAMPLES = r"""
 - name: Ensure the app policy is attached (out-of-band extras survive)
-  david_igou.rustfs.rustfs_policy_attachment:
+  david_igou.rustfs.policy_attachment:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -64,7 +64,7 @@ EXAMPLES = r"""
       - app-rw
 
 - name: Make the attachment set exactly these policies (detaches extras)
-  david_igou.rustfs.rustfs_policy_attachment:
+  david_igou.rustfs.policy_attachment:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -75,7 +75,7 @@ EXAMPLES = r"""
     exclusive: true
 
 - name: Attach a policy to a group
-  david_igou.rustfs.rustfs_policy_attachment:
+  david_igou.rustfs.policy_attachment:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret

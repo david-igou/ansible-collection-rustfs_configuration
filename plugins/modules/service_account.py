@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-module: rustfs_service_account
+module: service_account
 short_description: Manage service accounts on a RustFS server
 description:
   - Create or remove service accounts (scoped access-key/secret pairs)
@@ -68,7 +68,7 @@ author:
 
 EXAMPLES = r"""
 - name: Create a scoped service account
-  david_igou.rustfs.rustfs_service_account:
+  david_igou.rustfs.service_account:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEadminsecret
@@ -83,7 +83,7 @@ EXAMPLES = r"""
           Resource: [arn:aws:s3:::backups/*]
 
 - name: Remove a service account
-  david_igou.rustfs.rustfs_service_account:
+  david_igou.rustfs.service_account:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEadminsecret

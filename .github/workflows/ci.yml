@@ -14,24 +14,29 @@ on: # yamllint disable-line rule:truthy
 
 jobs:
   lint:
-    uses: ansible/ansible-content-actions/.github/workflows/ansible_lint.yaml@v1.1.0
+    uses: ansible/ansible-content-actions/.github/workflows/ansible_lint.yaml@7dc7e15a53c2ae8bd092461e53dafd6627e34ac6 # v1.1.0
   sanity:
-    uses: ansible/ansible-content-actions/.github/workflows/sanity.yaml@v1.1.0
+    uses: ansible/ansible-content-actions/.github/workflows/sanity.yaml@7dc7e15a53c2ae8bd092461e53dafd6627e34ac6 # v1.1.0
   units:
-    uses: ansible/ansible-content-actions/.github/workflows/unit.yaml@v1.1.0
+    uses: ansible/ansible-content-actions/.github/workflows/unit.yaml@7dc7e15a53c2ae8bd092461e53dafd6627e34ac6 # v1.1.0
   molecule:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
       - name: Checkout into the canonical collection path
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           path: ansible_collections/david_igou/rustfs
 
       - name: Install test requirements
-        # botocore: runtime dependency of the collection's rustfs_* modules
+        # botocore: runtime dependency of the collection's modules
         # (requirements.txt) — the role's stub hosts execute them on this
-        # runner's python.
-        run: pip install "molecule>=25" ansible-core ansible-lint botocore
+        # runner's python. Linting is the lint job's business, not this
+        # one's. ansible-core floats within released versions; the sanity
+        # matrix (2.19..devel) is the early-warning system for new cores.
+        run: pip install "molecule>=25" "ansible-core>=2.21" botocore
 
       - name: Run molecule (podman backend)
         working-directory: ansible_collections/david_igou/rustfs
