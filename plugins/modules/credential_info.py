@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-module: rustfs_credential_info
+module: credential_info
 short_description: Verify a credential pair against a RustFS server (liveness)
 description:
   - Prove that the access-key/secret-key pair the module authenticates
@@ -37,7 +37,7 @@ author:
 
 EXAMPLES = r"""
 - name: Verify a user credential can list its bucket
-  david_igou.rustfs.rustfs_credential_info:
+  david_igou.rustfs.credential_info:
     endpoint: https://nas.example.net:20292
     access_key: app-backups
     secret_key: EXAMPLEusersecret

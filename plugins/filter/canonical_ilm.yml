@@ -1,7 +1,7 @@
 ---
 DOCUMENTATION:
-  name: rustfs_canonical_ilm
-  version_added: 1.0.0
+  name: canonical_ilm
+  version_added: 2.0.0
   short_description: Canonicalize a RustFS ILM rule list for comparison
   description:
     - Strips server-generated rule ids (lowercase C(id) — the only casing rc
@@ -26,8 +26,8 @@ EXAMPLES: |
   - name: Compare live lifecycle rules against the spec
     ansible.builtin.set_fact:
       matches: >-
-        {{ (live_rules | david_igou.rustfs.rustfs_canonical_ilm)
-           == (spec_rules | david_igou.rustfs.rustfs_canonical_ilm) }}
+        {{ (live_rules | david_igou.rustfs.canonical_ilm)
+           == (spec_rules | david_igou.rustfs.canonical_ilm) }}
 
 RETURN:
   _value:

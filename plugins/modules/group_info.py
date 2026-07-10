@@ -9,77 +9,72 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-module: rustfs_user_info
-short_description: Gather information about IAM users on a RustFS server
+module: group_info
+short_description: Gather information about IAM groups on a RustFS server
 description:
-  - List IAM users, or report one user's status, attached policies, and
-    group memberships.
-  - Secrets are never returned (the server does not expose them).
+  - List IAM groups, or report one group's members, status, and attached
+    policies.
 version_added: "2.0.0"
 extends_documentation_fragment:
   - david_igou.rustfs.rustfs
 options:
   name:
     description:
-      - Access key of a single user to inspect.
-      - When omitted, all users are listed.
+      - Name of a single group to inspect.
+      - When omitted, all group names are listed.
     type: str
 author:
   - David Igou (@david-igou)
 """
 
 EXAMPLES = r"""
-- name: List all users
-  david_igou.rustfs.rustfs_user_info:
+- name: List all groups
+  david_igou.rustfs.group_info:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
-  register: all_users
+  register: all_groups
 
-- name: Inspect one user
-  david_igou.rustfs.rustfs_user_info:
+- name: Inspect one group
+  david_igou.rustfs.group_info:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
-    name: app-backups
-  register: app_user
+    name: developers
+  register: developers
 """
 
 RETURN = r"""
-users:
-  description: All users on the server.
+groups:
+  description: Names of all groups on the server.
   returned: when O(name) is omitted
   type: list
-  elements: dict
-  sample:
-    - name: app-backups
-      status: enabled
-      policies: [app-rw]
-      member_of: []
-user:
-  description: Detail for the requested user.
+  elements: str
+  sample: [developers]
+group:
+  description: Detail for the requested group.
   returned: when O(name) is given
   type: dict
   contains:
     name:
-      description: The user's access key.
+      description: Group name.
       type: str
-      sample: app-backups
+      sample: developers
     exists:
-      description: Whether the user exists.
+      description: Whether the group exists.
       type: bool
       sample: true
+    members:
+      description: Member access keys.
+      type: list
+      elements: str
+      sample: [alice, bob]
     status:
-      description: Account status.
+      description: Group status.
       type: str
       sample: enabled
     policies:
-      description: Names of policies attached to the user.
-      type: list
-      elements: str
-      sample: [app-rw]
-    member_of:
-      description: Groups the user belongs to.
+      description: Names of policies attached to the group.
       type: list
       elements: str
       sample: []
@@ -112,17 +107,13 @@ def run_module():
     try:
         client = RustfsAdminClient(module)
         if name is None:
-            users = client.list_users()
-            result["users"] = [
-                dict(name=access_key, **info)
-                for access_key, info in sorted(users.items())
-            ]
+            result["groups"] = sorted(client.list_groups())
         else:
-            info = client.get_user(name)
-            user = dict(name=name, exists=info is not None)
+            info = client.get_group(name)
+            group = dict(name=name, exists=info is not None)
             if info is not None:
-                user.update(info)
-            result["user"] = user
+                group.update(info)
+            result["group"] = group
     except RustfsError as exc:
         module.fail_json(msg=to_native(exc))
 

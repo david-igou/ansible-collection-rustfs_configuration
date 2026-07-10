@@ -58,9 +58,9 @@ Individual entries are silenced with
 ``user:<name>:extra-attachment:<policy>``).
 
 Operators who genuinely want to remove server-side state use the
-modules directly — :ansplugin:`david_igou.rustfs.rustfs_bucket#module`
+modules directly — :ansplugin:`david_igou.rustfs.bucket#module`
 with ``state: absent``,
-:ansplugin:`david_igou.rustfs.rustfs_policy_attachment#module` with
+:ansplugin:`david_igou.rustfs.policy_attachment#module` with
 ``exclusive: true`` (the only detach this server has), and so on. The
 role's spec never expresses deletion.
 
@@ -74,7 +74,7 @@ catches out-of-band rotations, stale secret-store items, and wedged
 servers — divergence between what your automation believes and what the
 server accepts.
 
-The probe (:ansplugin:`david_igou.rustfs.rustfs_credential_info#module`)
+The probe (:ansplugin:`david_igou.rustfs.credential_info#module`)
 distinguishes *authentication* (the pair is cryptographically valid)
 from *authorization* (it may do what was asked); an ``AccessDenied`` is
 a verdict, not a retried network blip. Liveness proves authentication

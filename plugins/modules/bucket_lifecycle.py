@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-module: rustfs_bucket_lifecycle
+module: bucket_lifecycle
 short_description: Manage the lifecycle (ILM) configuration of a RustFS bucket
 description:
   - Set or remove the whole lifecycle-rule configuration of a bucket on a
@@ -57,7 +57,7 @@ author:
 
 EXAMPLES = r"""
 - name: Expire objects under tmp/ after 7 days
-  david_igou.rustfs.rustfs_bucket_lifecycle:
+  david_igou.rustfs.bucket_lifecycle:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -69,7 +69,7 @@ EXAMPLES = r"""
           Days: 7
 
 - name: Remove the whole lifecycle configuration
-  david_igou.rustfs.rustfs_bucket_lifecycle:
+  david_igou.rustfs.bucket_lifecycle:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret

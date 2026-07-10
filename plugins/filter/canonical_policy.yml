@@ -1,7 +1,7 @@
 ---
 DOCUMENTATION:
-  name: rustfs_canonical_policy
-  version_added: 1.0.0
+  name: canonical_policy
+  version_added: 2.0.0
   short_description: Canonicalize a RustFS IAM policy document for comparison
   description:
     - Sorts C(Action)/C(Resource) lists inside each statement, drops the empty
@@ -24,8 +24,8 @@ EXAMPLES: |
   - name: Compare a live policy against the spec
     ansible.builtin.set_fact:
       matches: >-
-        {{ (live_doc | david_igou.rustfs.rustfs_canonical_policy)
-           == (spec_doc | david_igou.rustfs.rustfs_canonical_policy) }}
+        {{ (live_doc | david_igou.rustfs.canonical_policy)
+           == (spec_doc | david_igou.rustfs.canonical_policy) }}
 
 RETURN:
   _value:

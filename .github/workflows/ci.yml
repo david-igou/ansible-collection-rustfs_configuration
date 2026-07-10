@@ -28,7 +28,7 @@ jobs:
           path: ansible_collections/david_igou/rustfs
 
       - name: Install test requirements
-        # botocore: runtime dependency of the collection's rustfs_* modules
+        # botocore: runtime dependency of the collection's modules
         # (requirements.txt) — the role's stub hosts execute them on this
         # runner's python.
         run: pip install "molecule>=25" ansible-core ansible-lint botocore

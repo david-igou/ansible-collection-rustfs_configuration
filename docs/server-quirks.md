@@ -15,21 +15,21 @@ kept below under *Overturned* because they explain v1 design fossils.
 
 | Quirk | Where it lands |
 |---|---|
-| `CreateBucket` on an EXISTING bucket returns false success | `rustfs_bucket` decides existence by read (HeadBucket), never by the create call |
-| IAM policy `Action`/`Resource` arrays return in a different order on every call (stored as sets) | `canonical_policy` (module_utils, shared with the `rustfs_canonical_policy` filter) on both sides of every comparison |
+| `CreateBucket` on an EXISTING bucket returns false success | `bucket` decides existence by read (HeadBucket), never by the create call |
+| IAM policy `Action`/`Resource` arrays return in a different order on every call (stored as sets) | `canonical_policy` (module_utils, shared with the `canonical_policy` filter) on both sides of every comparison |
 | Storing a policy injects empty boilerplate into the echo: document-level `ID: ""` and, per statement, `Sid: ""` and `Condition: {}` | `canonical_policy` drops all three empties on both sides, so a from-scratch document (written without them) stays idempotent |
 | `GET /info-canned-policy` answers a metadata WRAPPER `{policy_name, policy: <doc>, create_date, update_date}` (verified live) | `RustfsAdminClient.get_policy` unwraps to the document |
 | A MISSING canned policy answers HTTP **500 InternalError** ("policy does not exist"), not 404 (verified live in molecule) | every admin `get_*` treats a permanent error carrying "does not exist" as not-found; genuine 500s still raise |
 | ILM read DROPS empty scoping — a whole-bucket rule stored with `Prefix: ""` comes back with no Prefix/Filter at all | `canonical_lifecycle_rules` treats empty Prefix/Filter as absent on both sides |
-| ILM put is a FULL REPLACE of the bucket's rules | `rustfs_bucket_lifecycle` reconciles the whole ruleset — no per-rule editing; the spec is the entire configuration |
-| `DELETE /remove-canned-policy` while the policy is attached → HTTP 500 | `rustfs_policy` `state: absent` maps it to a clear detach-first error (the role never deletes anyway) |
-| `PUT /set-user-or-group-policy` REPLACES the whole attachment set (not additive), and **no detach endpoint exists** (rc's detach is a stub returning UnsupportedFeature) | `rustfs_policy_attachment` reads current and writes union (`exclusive: false`, role behavior — extras survive) or the exact list (`exclusive: true` — which IS detach on this server) |
-| `PUT /add-user` on an existing access key rotates the secret in place (attachments survive) | `rustfs_user` never re-PUTs an existing user unless `update_secret: true` |
-| S3 credential validation: `ListBuckets` with a wrong secret → `SignatureDoesNotMatch` / unknown key → `InvalidAccessKeyId`; `AccessDenied` means the pair is VALID but unauthorized | `rustfs_credential_info` separates `authenticated` from `authorized` (rc lumped data-path AccessDenied in with retryable network errors) |
+| ILM put is a FULL REPLACE of the bucket's rules | `bucket_lifecycle` reconciles the whole ruleset — no per-rule editing; the spec is the entire configuration |
+| `DELETE /remove-canned-policy` while the policy is attached → HTTP 500 | `policy` `state: absent` maps it to a clear detach-first error (the role never deletes anyway) |
+| `PUT /set-user-or-group-policy` REPLACES the whole attachment set (not additive), and **no detach endpoint exists** (rc's detach is a stub returning UnsupportedFeature) | `policy_attachment` reads current and writes union (`exclusive: false`, role behavior — extras survive) or the exact list (`exclusive: true` — which IS detach on this server) |
+| `PUT /add-user` on an existing access key rotates the secret in place (attachments survive) | `user` never re-PUTs an existing user unless `update_secret: true` |
+| S3 credential validation: `ListBuckets` with a wrong secret → `SignatureDoesNotMatch` / unknown key → `InvalidAccessKeyId`; `AccessDenied` means the pair is VALID but unauthorized | `credential_info` separates `authenticated` from `authorized` (rc lumped data-path AccessDenied in with retryable network errors) |
 | Admin API (`/rustfs/admin/v3/*`) refuses connections in bursts while the S3 data path stays healthy | every call retries transport-level failures only (connection refused/reset, timeouts, HTTP 502/503/504), `retries`/`retry_delay` params |
-| Versioned buckets are undeletable | `rustfs_bucket` `state: absent` surfaces a clear error (deletion is out of role scope anyway) |
+| Versioned buckets are undeletable | `bucket` `state: absent` surfaces a clear error (deletion is out of role scope anyway) |
 | `create-service-account` requires the `expiration` JSON key to be PRESENT (null when unset) | `RustfsAdminClient.create_service_account` always emits it |
-| No service-account update endpoint exists in beta-8 | `rustfs_service_account` never modifies an existing account (documented: remove + recreate) |
+| No service-account update endpoint exists in beta-8 | `service_account` never modifies an existing account (documented: remove + recreate) |
 
 ## Admin API contract (established from rc v0.1.25 source, verified live)
 
@@ -50,8 +50,8 @@ kept below under *Overturned* because they explain v1 design fossils.
 | v1 belief | What direct-API testing showed |
 |---|---|
 | "ILM honours ONLY a top-level `prefix`; a nested `filter` is silently dropped on export" | A `Filter: {Prefix: ...}` **survives a direct S3 put/get round-trip** (verified live). The drop was in rc's JSON serialization. Whether the expiry scanner honours Filter at execution time remains unverified — top-level `Prefix` is still the recommended shape. |
-| "`ilm rule import` REQUIRES an `id` on every rule" | rc-level validation. The S3 put accepts id-less rules; `rustfs_bucket_lifecycle` generates deterministic content-derived IDs anyway so comparisons and server state stay stable. |
-| "clear-all lifecycle semantics unverified" | `DeleteBucketLifecycle` works (verified live) — `rustfs_bucket_lifecycle` `state: absent` has defined semantics. The ROLE still rejects `rules: []` (deletion safety). |
+| "`ilm rule import` REQUIRES an `id` on every rule" | rc-level validation. The S3 put accepts id-less rules; `bucket_lifecycle` generates deterministic content-derived IDs anyway so comparisons and server state stay stable. |
+| "clear-all lifecycle semantics unverified" | `DeleteBucketLifecycle` works (verified live) — `bucket_lifecycle` `state: absent` has defined semantics. The ROLE still rejects `rules: []` (deletion safety). |
 | rc exit-code taxonomy (3 = the only retryable) as the retry key | Replaced by HTTP-level classification in module_utils; no string/exit-code matching anywhere. |
 
 ## Known unknowns (re-verify on every server pin bump)

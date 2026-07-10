@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-module: rustfs_bucket_quota
+module: bucket_quota
 short_description: Manage the hard quota of a RustFS bucket
 description:
   - Set or clear a bucket's hard size quota via the RustFS admin REST API
@@ -44,7 +44,7 @@ author:
 
 EXAMPLES = r"""
 - name: Cap the backups bucket at 500 GiB
-  david_igou.rustfs.rustfs_bucket_quota:
+  david_igou.rustfs.bucket_quota:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -52,7 +52,7 @@ EXAMPLES = r"""
     size: 500GB
 
 - name: Remove the quota
-  david_igou.rustfs.rustfs_bucket_quota:
+  david_igou.rustfs.bucket_quota:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret

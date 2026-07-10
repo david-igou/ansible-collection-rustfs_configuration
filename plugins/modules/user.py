@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-module: rustfs_user
+module: user
 short_description: Manage IAM users on a RustFS server
 description:
   - Create, remove, enable/disable IAM users via the RustFS admin REST API.
@@ -63,7 +63,7 @@ author:
 
 EXAMPLES = r"""
 - name: Create an application user
-  david_igou.rustfs.rustfs_user:
+  david_igou.rustfs.user:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEadminsecret
@@ -71,7 +71,7 @@ EXAMPLES = r"""
     secret: EXAMPLEusersecret
 
 - name: Disable a user without touching its secret
-  david_igou.rustfs.rustfs_user:
+  david_igou.rustfs.user:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEadminsecret
@@ -79,7 +79,7 @@ EXAMPLES = r"""
     status: disabled
 
 - name: Remove a user
-  david_igou.rustfs.rustfs_user:
+  david_igou.rustfs.user:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEadminsecret

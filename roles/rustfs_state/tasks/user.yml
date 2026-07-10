@@ -6,7 +6,7 @@
 # - creation uses the RESOLVED `secret_key` provided in the spec; if it is
 #   absent when the user needs creating, the module fails with
 #   instructions. The role never generates credentials.
-# - an EXISTING user's secret is never touched (the rustfs_user module
+# - an EXISTING user's secret is never touched (the user module
 #   only rotates with an explicit update_secret opt-in, which the role
 #   never sets) — rotation is a deliberate manual act, not a converge
 #   side effect.
@@ -20,7 +20,7 @@
           | map(attribute='policies') | first) | default([]) }}
 
 - name: "Reconcile user {{ rustfs_state_user.name }}"
-  david_igou.rustfs.rustfs_user:
+  david_igou.rustfs.user:
     name: "{{ rustfs_state_user.name }}"
     secret: "{{ rustfs_state_user.secret_key | default(omit) }}"
     state: present
@@ -33,7 +33,7 @@
 
 # Server quirk (empirically confirmed on 1.0.0-beta.8): the attachment
 # primitive REPLACES the user's whole policy set — it is not additive.
-# The rustfs_policy_attachment module therefore reads the current set and
+# The policy_attachment module therefore reads the current set and
 # writes the UNION of current + desired (exclusive=false): desired
 # policies converge, out-of-band extras survive (deletion safety) and
 # stay visible as extra-attachment reports below.
@@ -56,7 +56,7 @@
     # attachment (already recorded above) cannot be probed against a user
     # that does not exist yet.
     - name: "Attach policies to user {{ rustfs_state_user.name }}"
-      david_igou.rustfs.rustfs_policy_attachment:
+      david_igou.rustfs.policy_attachment:
         user: "{{ rustfs_state_user.name }}"
         policies: "{{ rustfs_state_user.policies }}"
         exclusive: false

@@ -6,7 +6,7 @@ argument_specs:
       - Reconciles IAM policies, buckets, versioning, lifecycle rules, users and
         policy attachments on the RustFS instance this host represents (a
         connection-local stub named after the instance; the role reaches
-        I(rustfs_state_endpoint) through the collection's rustfs_* modules —
+        I(rustfs_state_endpoint) through the collection's modules —
         direct S3 and admin-API calls, no rc CLI), and verifies that the
         provided per-user credentials actually authenticate.
       - The role is a pure function over its inputs. Every credential arrives

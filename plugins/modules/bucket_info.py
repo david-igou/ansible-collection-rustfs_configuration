@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-module: rustfs_bucket_info
+module: bucket_info
 short_description: Gather information about buckets on a RustFS server
 description:
   - List buckets, or report one bucket's existence, versioning state,
@@ -29,14 +29,14 @@ author:
 
 EXAMPLES = r"""
 - name: List all buckets
-  david_igou.rustfs.rustfs_bucket_info:
+  david_igou.rustfs.bucket_info:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
   register: all_buckets
 
 - name: Inspect one bucket
-  david_igou.rustfs.rustfs_bucket_info:
+  david_igou.rustfs.bucket_info:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret

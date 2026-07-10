@@ -65,7 +65,7 @@ Quickstart. Three shapes worth calling out up front:
   catches — liveness proves *authentication* plus listability of the one
   liveness bucket, not full authorization scope (to audit the latter, probe
   the account's creds against each verb with any S3 client, or use the
-  `rustfs_credential_info` module per bucket).
+  `credential_info` module per bucket).
 
 ## Outputs (stable API)
 
@@ -94,11 +94,11 @@ Quickstart. Three shapes worth calling out up front:
    `union(existing, desired)` — desired policies converge, out-of-band
    extras survive and stay visible as `extra-attachment` reports.
 3. Secrets: never looked up, never generated, never rewritten for an
-   existing user (the `rustfs_user` module rotates only with an explicit
+   existing user (the `user` module rotates only with an explicit
    `update_secret` opt-in, which the role never sets); `no_log` everywhere
    secrets flow.
 4. Liveness: per user with `liveness_bucket` + `secret_key`, the provided
-   pair authenticates and lists the bucket (`rustfs_credential_info`); all
+   pair authenticates and lists the bucket (`credential_info`); all
    failures are collected, the full report is emitted, then the play
    fails. Check mode skips users pending creation. Gate order: liveness,
    then unmanaged (opt-in), then drift.

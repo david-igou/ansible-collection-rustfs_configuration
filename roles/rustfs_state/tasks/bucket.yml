@@ -7,7 +7,7 @@
 # (YAML null) means "leave unmanaged", same as omitting the key.
 
 - name: "Reconcile bucket {{ rustfs_state_bucket.name }}"
-  david_igou.rustfs.rustfs_bucket:
+  david_igou.rustfs.bucket:
     name: "{{ rustfs_state_bucket.name }}"
     state: present
     versioning: >-
@@ -39,7 +39,7 @@
     # representations can never produce false drift — and generates
     # deterministic IDs for rules that omit one.
     - name: "Reconcile lifecycle of bucket {{ rustfs_state_bucket.name }}"
-      david_igou.rustfs.rustfs_bucket_lifecycle:
+      david_igou.rustfs.bucket_lifecycle:
         bucket: "{{ rustfs_state_bucket.name }}"
         rules: "{{ rustfs_state_bucket.lifecycle.rules }}"
         state: present

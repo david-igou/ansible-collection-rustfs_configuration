@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-module: rustfs_policy_info
+module: policy_info
 short_description: Gather information about canned IAM policies on a RustFS server
 description:
   - List canned policies, or fetch one policy's document (raw and
@@ -29,14 +29,14 @@ author:
 
 EXAMPLES = r"""
 - name: List all canned policies
-  david_igou.rustfs.rustfs_policy_info:
+  david_igou.rustfs.policy_info:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
   register: all_policies
 
 - name: Fetch one policy
-  david_igou.rustfs.rustfs_policy_info:
+  david_igou.rustfs.policy_info:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret

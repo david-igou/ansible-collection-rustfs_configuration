@@ -8,8 +8,8 @@ __metaclass__ = type
 import copy
 
 from ansible_collections.david_igou.rustfs.plugins.filter.rustfs import (
-    rustfs_canonical_ilm,
-    rustfs_canonical_policy,
+    canonical_ilm,
+    canonical_policy,
 )
 
 POLICY = {
@@ -75,11 +75,11 @@ def _shuffled_policy():
 
 
 def test_policy_ordering_permutations_are_equal():
-    assert rustfs_canonical_policy(POLICY) == rustfs_canonical_policy(_shuffled_policy())
+    assert canonical_policy(POLICY) == canonical_policy(_shuffled_policy())
 
 
 def test_policy_empty_condition_and_id_are_dropped():
-    canon = rustfs_canonical_policy(POLICY)
+    canon = canonical_policy(POLICY)
     assert "ID" not in canon
     assert all("Condition" not in s for s in canon["Statement"])
 
@@ -88,18 +88,18 @@ def test_policy_nonempty_condition_passes_through():
     p = copy.deepcopy(POLICY)
     cond = {"StringEquals": {"aws:username": "quay"}}
     p["Statement"][0]["Condition"] = cond
-    canon = rustfs_canonical_policy(p)
+    canon = canonical_policy(p)
     assert any(s.get("Condition") == cond for s in canon["Statement"])
 
 
 def test_policy_input_is_not_mutated():
     p = copy.deepcopy(POLICY)
-    rustfs_canonical_policy(p)
+    canonical_policy(p)
     assert p == POLICY
 
 
 def test_policy_empty_sid_is_dropped():
-    canon = rustfs_canonical_policy(POLICY_NO_SID_DESIRED)
+    canon = canonical_policy(POLICY_NO_SID_DESIRED)
     assert all("Sid" not in s for s in canon["Statement"])
 
 
@@ -109,13 +109,13 @@ def test_policy_from_scratch_matches_server_echo():
     the policy re-applies `update` on every run. Regression for the empty-Sid
     idempotence trap (the server adds Sid: "" but the filter used to keep it).
     """
-    assert rustfs_canonical_policy(POLICY_NO_SID_DESIRED) == rustfs_canonical_policy(
+    assert canonical_policy(POLICY_NO_SID_DESIRED) == canonical_policy(
         POLICY_SERVER_ECHO
     )
 
 
 def test_policy_nonempty_sid_passes_through():
-    canon = rustfs_canonical_policy(POLICY)
+    canon = canonical_policy(POLICY)
     assert any(s.get("Sid") == "ListAndDescribeBucket" for s in canon["Statement"])
 
 
@@ -140,11 +140,11 @@ def test_ilm_ids_are_ignored_in_comparison():
     regenerated = copy.deepcopy(ILM_RULES)
     for r in regenerated:
         r["id"] = "ffffffff-0000-0000-0000-000000000000"
-    assert rustfs_canonical_ilm(ILM_RULES) == rustfs_canonical_ilm(regenerated)
+    assert canonical_ilm(ILM_RULES) == canonical_ilm(regenerated)
 
 
 def test_ilm_ordering_is_deterministic():
-    assert rustfs_canonical_ilm(ILM_RULES) == rustfs_canonical_ilm(list(reversed(ILM_RULES)))
+    assert canonical_ilm(ILM_RULES) == canonical_ilm(list(reversed(ILM_RULES)))
 
 
 def test_ilm_id_casing_both_stripped():
@@ -155,14 +155,14 @@ def test_ilm_id_casing_both_stripped():
     """
     upper = [{"ID": "abc", "Status": "Enabled", "Prefix": "x/"}]
     lower = [{"id": "def", "Status": "Enabled", "Prefix": "x/"}]
-    assert rustfs_canonical_ilm(upper) == rustfs_canonical_ilm(lower)
-    assert "ID" not in rustfs_canonical_ilm(upper)[0]
+    assert canonical_ilm(upper) == canonical_ilm(lower)
+    assert "ID" not in canonical_ilm(upper)[0]
 
 
 def test_ilm_rule_content_differences_are_detected():
     changed = copy.deepcopy(ILM_RULES)
     changed[0]["noncurrentVersionExpiration"]["noncurrentDays"] = 7
-    assert rustfs_canonical_ilm(ILM_RULES) != rustfs_canonical_ilm(changed)
+    assert canonical_ilm(ILM_RULES) != canonical_ilm(changed)
 
 
 def test_ilm_empty_scoping_matches_server_drop():
@@ -178,7 +178,7 @@ def test_ilm_empty_scoping_matches_server_drop():
         [{"id": "a", "status": "Enabled", "filter": {"prefix": ""}, "expiration": {"days": 30}}],
         [{"id": "a", "status": "Enabled", "filter": {}, "expiration": {"days": 30}}],
     ):
-        assert rustfs_canonical_ilm(empty_scoped) == rustfs_canonical_ilm(server_export)
+        assert canonical_ilm(empty_scoped) == canonical_ilm(server_export)
 
 
 def test_ilm_nonempty_prefix_is_preserved():
@@ -186,8 +186,8 @@ def test_ilm_nonempty_prefix_is_preserved():
     honours it), so scoped rules still compare correctly."""
     scoped = [{"id": "a", "status": "Enabled", "prefix": "logs/", "expiration": {"days": 15}}]
     whole = [{"id": "b", "status": "Enabled", "expiration": {"days": 15}}]
-    assert rustfs_canonical_ilm(scoped) != rustfs_canonical_ilm(whole)
-    assert rustfs_canonical_ilm(scoped)[0].get("prefix") == "logs/"
+    assert canonical_ilm(scoped) != canonical_ilm(whole)
+    assert canonical_ilm(scoped)[0].get("prefix") == "logs/"
 
 
 def test_ilm_current_object_expiration_is_preserved():
@@ -198,7 +198,7 @@ def test_ilm_current_object_expiration_is_preserved():
     noncurrent-version shape."""
     desired = [{"id": "expire-objects-30d", "status": "Enabled", "expiration": {"days": 30}}]
     server_export = [{"id": "srv-gen", "status": "Enabled", "expiration": {"days": 30}}]
-    assert rustfs_canonical_ilm(desired) == rustfs_canonical_ilm(server_export)
+    assert canonical_ilm(desired) == canonical_ilm(server_export)
     # and it is genuinely different from a noncurrent-version rule
     noncurrent = [{"id": "x", "status": "Enabled", "noncurrentVersionExpiration": {"noncurrentDays": 30}}]
-    assert rustfs_canonical_ilm(desired) != rustfs_canonical_ilm(noncurrent)
+    assert canonical_ilm(desired) != canonical_ilm(noncurrent)

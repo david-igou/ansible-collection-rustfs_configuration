@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-module: rustfs_bucket
+module: bucket
 short_description: Manage buckets on a RustFS server
 description:
   - Create or remove buckets and manage their versioning state on a RustFS
@@ -51,7 +51,7 @@ author:
 
 EXAMPLES = r"""
 - name: Create a bucket with versioning enabled
-  david_igou.rustfs.rustfs_bucket:
+  david_igou.rustfs.bucket:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
@@ -59,14 +59,14 @@ EXAMPLES = r"""
     versioning: enabled
 
 - name: Ensure a bucket exists, versioning unmanaged
-  david_igou.rustfs.rustfs_bucket:
+  david_igou.rustfs.bucket:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret
     name: scratch
 
 - name: Remove a bucket
-  david_igou.rustfs.rustfs_bucket:
+  david_igou.rustfs.bucket:
     endpoint: https://nas.example.net:20292
     access_key: admin
     secret_key: EXAMPLEsecret

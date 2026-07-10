@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 class ModuleDocFragment(object):
-    # Connection options shared by every rustfs_* module.
+    # Connection options shared by every module in this collection.
     DOCUMENTATION = r"""
 options:
   endpoint:

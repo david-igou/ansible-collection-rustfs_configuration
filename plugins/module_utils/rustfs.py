@@ -2,7 +2,7 @@
 
 # GNU General Public License v3.0+
 # (see https://www.gnu.org/licenses/gpl-3.0.txt)
-"""Shared client plumbing for the rustfs_* modules.
+"""Shared client plumbing for the modules.
 
 RustFS exposes two management planes and the modules speak both directly
 (no ``rc`` binary anywhere):
@@ -79,7 +79,7 @@ class RustfsConflictError(RustfsError):
 
 
 def rustfs_argument_spec():
-    """Connection argument spec shared by every rustfs_* module."""
+    """Connection argument spec shared by every module in this collection."""
     return dict(
         endpoint=dict(
             type="str",
@@ -277,7 +277,7 @@ class RustfsAdminClient(object):
 
     def add_user(self, access_key, secret_key, status="enabled"):
         # NOTE: add-user on an EXISTING access key rotates its secret in
-        # place - callers must guard (rustfs_user only calls this on create
+        # place - callers must guard (user only calls this on create
         # or with an explicit update_secret opt-in).
         self.request(
             "PUT",
@@ -466,7 +466,7 @@ class RustfsAdminClient(object):
 
 # S3 error codes that mean "credentials are wrong" (as opposed to "valid
 # but unauthorized" - rc's alias-set validation treats AccessDenied as
-# valid credentials, and rustfs_credential_info makes the same call).
+# valid credentials, and credential_info makes the same call).
 S3_BAD_CREDENTIAL_CODES = (
     "InvalidAccessKeyId",
     "SignatureDoesNotMatch",

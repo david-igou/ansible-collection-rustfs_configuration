@@ -20,7 +20,7 @@ There are two ways to use the collection, and they compose:
 * the :ref:`rustfs_state role <ansible_collections.david_igou.rustfs.docsite.rustfs_state_role>`
   — reconcile one whole instance against a declarative per-host spec,
   with drift detection, liveness checks, and deletion safety;
-* the ``rustfs_*`` modules — direct, single-resource primitives for
+* the modules — direct, single-resource primitives for
   everything else (including the things the role deliberately never
   does, like deleting).
 
@@ -146,7 +146,7 @@ connection once with the collection's action group:
          secret_key: "{{ admin_sk }}"
      tasks:
        - name: Scoped service account for velero
-         david_igou.rustfs.rustfs_service_account:
+         david_igou.rustfs.service_account:
            name: svc-velero
            secret: "{{ svc_secret }}"
            policy:
@@ -157,7 +157,7 @@ connection once with the collection's action group:
                  Resource: [arn:aws:s3:::velero, arn:aws:s3:::velero/*]
 
        - name: Cap the backups bucket at 500 GiB
-         david_igou.rustfs.rustfs_bucket_quota:
+         david_igou.rustfs.bucket_quota:
            bucket: backups
            size: 500GB
 
@@ -167,10 +167,10 @@ useful with the ``environment`` keyword on a block or play.
 
 The module reference in this docsite documents every module's full
 parameter set, return values, and examples — start with
-:ansplugin:`david_igou.rustfs.rustfs_bucket#module`,
-:ansplugin:`david_igou.rustfs.rustfs_policy#module`,
-:ansplugin:`david_igou.rustfs.rustfs_user#module`, and
-:ansplugin:`david_igou.rustfs.rustfs_credential_info#module`.
+:ansplugin:`david_igou.rustfs.bucket#module`,
+:ansplugin:`david_igou.rustfs.policy#module`,
+:ansplugin:`david_igou.rustfs.user#module`, and
+:ansplugin:`david_igou.rustfs.credential_info#module`.
 
 Migrating from 1.x
 ------------------
