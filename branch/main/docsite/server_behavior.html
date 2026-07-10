@@ -1,0 +1,263 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Server behavior, errors, and retries &mdash; David_Igou.Rustfs Collection  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=41de9001" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/ansible.css?v=b54c304f" />
+      <link rel="stylesheet" type="text/css" href="../_static/antsibull-minimal.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/rtd-ethical-ads.css?v=289b023e" />
+
+  
+    <link rel="shortcut icon" href="../_static/images/Ansible-Mark-RGB_Black.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=7f41d439"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="david_igou.rustfs.rustfs_state role" href="rustfs_state_role.html" />
+    <link rel="prev" title="Drift detection and reporting" href="drift_detection.html" /><!-- extra head elements for Ansible beyond RTD Sphinx Theme -->
+
+
+
+
+</head>
+
+<body class="wy-body-for-nav"><!-- extra body elements for Ansible beyond RTD Sphinx Theme -->
+
+<div class="DocSite-globalNav ansibleNav">
+  <ul>
+    <li><a href="https://www.ansible.com/blog" target="_blank">Blog</a></li>
+    <li><a href="https://forum.ansible.com/" target="_blank">Ansible community forum</a></li>
+    <li><a href="https://docs.ansible.com/" target="_blank">Documentation</a></li>
+  </ul>
+</div>
+
+<a class="DocSite-nav" href="https://david-igou.github.io/ansible-collection-rustfs_configuration/branch/main/" style="padding-bottom: 30px;">
+
+  <img class="DocSiteNav-logo"
+    src="../_static/images/Ansible-Mark-RGB_White.png"
+    alt="Ansible Logo">
+  <div class="DocSiteNav-title">David_Igou.Rustfs Collection Docs</div>
+</a>
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            David_Igou.Rustfs Collection
+          </a><!--- Based on https://github.com/rtfd/sphinx_rtd_theme/pull/438/files -->
+
+<div class="version">
+  
+    
+  
+</div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <label class="sr-only" for="q">Search docs:</label>
+    <input type="text" class="st-default-search-input" id="q" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+  
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="guide.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="drift_detection.html">Drift detection and reporting</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Server behavior, errors, and retries</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#the-two-management-planes">The two management planes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#error-classification-and-retries">Error classification and retries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#canonical-comparison">Canonical comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#behaviors-worth-knowing-when-using-the-modules-directly">Behaviors worth knowing when using the modules directly</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="rustfs_state_role.html">david_igou.rustfs.rustfs_state role</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_bucket_module.html">david_igou.rustfs.rustfs_bucket module – Manage buckets on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_bucket_info_module.html">david_igou.rustfs.rustfs_bucket_info module – Gather information about buckets on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_bucket_lifecycle_module.html">david_igou.rustfs.rustfs_bucket_lifecycle module – Manage the lifecycle (ILM) configuration of a RustFS bucket</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_bucket_quota_module.html">david_igou.rustfs.rustfs_bucket_quota module – Manage the hard quota of a RustFS bucket</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_credential_info_module.html">david_igou.rustfs.rustfs_credential_info module – Verify a credential pair against a RustFS server (liveness)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_group_module.html">david_igou.rustfs.rustfs_group module – Manage IAM groups on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_group_info_module.html">david_igou.rustfs.rustfs_group_info module – Gather information about IAM groups on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_policy_module.html">david_igou.rustfs.rustfs_policy module – Manage canned IAM policies on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_policy_attachment_module.html">david_igou.rustfs.rustfs_policy_attachment module – Manage the policies attached to a RustFS user or group</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_policy_info_module.html">david_igou.rustfs.rustfs_policy_info module – Gather information about canned IAM policies on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_service_account_module.html">david_igou.rustfs.rustfs_service_account module – Manage service accounts on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_service_account_info_module.html">david_igou.rustfs.rustfs_service_account_info module – Gather information about service accounts on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_user_module.html">david_igou.rustfs.rustfs_user module – Manage IAM users on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_user_info_module.html">david_igou.rustfs.rustfs_user_info module – Gather information about IAM users on a RustFS server</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_canonical_ilm_filter.html">david_igou.rustfs.rustfs_canonical_ilm filter – Canonicalize a RustFS ILM rule list for comparison</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_canonical_policy_filter.html">david_igou.rustfs.rustfs_canonical_policy filter – Canonicalize a RustFS IAM policy document for comparison</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_state_role.html">david_igou.rustfs.rustfs_state role – Reconcile one RustFS instance’s in-server state against a declarative spec</a></li>
+</ul>
+<!-- extra nav elements for Ansible beyond RTD Sphinx Theme -->
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">David_Igou.Rustfs Collection</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Server behavior, errors, and retries</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+
+  
+           <div itemprop="articleBody">
+             
+  <section id="server-behavior-errors-and-retries">
+<span id="ansible-collections-david-igou-rustfs-docsite-server-behavior"></span><h1>Server behavior, errors, and retries<a class="headerlink" href="#server-behavior-errors-and-retries" title="Link to this heading"></a></h1>
+<p>RustFS (validated against <code class="docutils literal notranslate"><span class="pre">1.0.0-beta.8</span></code>) has empirically-established
+behaviors the modules code around so that <em>you</em> never have to. This page
+summarizes the operationally relevant ones; the full behavior matrix
+lives in the repository at
+<a class="reference external" href="https://github.com/david-igou/ansible-collection-rustfs_configuration/blob/main/docs/server-quirks.md">docs/server-quirks.md</a>.</p>
+<section id="the-two-management-planes">
+<h2>The two management planes<a class="headerlink" href="#the-two-management-planes" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>S3 data plane</strong> — buckets, versioning, lifecycle. Stock S3 API
+calls, driven through botocore with path-style addressing.</p></li>
+<li><p><strong>Admin REST API</strong> — <code class="docutils literal notranslate"><span class="pre">/rustfs/admin/v3/*</span></code> for users, canned
+policies, attachments, groups, service accounts, quota. Plain-JSON
+bodies (camelCase keys), authenticated with AWS SigV4 exactly like the
+S3 plane.</p></li>
+</ul>
+<p>Both planes accept the same credential pair; every module takes one
+<code class="docutils literal notranslate"><span class="pre">endpoint</span></code> / <code class="docutils literal notranslate"><span class="pre">access_key</span></code> / <code class="docutils literal notranslate"><span class="pre">secret_key</span></code> set (or the <code class="docutils literal notranslate"><span class="pre">RUSTFS_*</span></code>
+environment variables).</p>
+</section>
+<section id="error-classification-and-retries">
+<h2>Error classification and retries<a class="headerlink" href="#error-classification-and-retries" title="Link to this heading"></a></h2>
+<p>The beta-8 admin API is known to refuse connections in bursts while the
+S3 data path stays healthy. Every module call therefore retries — but
+<strong>only transport-level failures</strong>: connection refused/reset, timeouts,
+and HTTP 502/503/504. Everything else is permanent and fails
+immediately with a clear message:</p>
+<ul class="simple">
+<li><p>authentication/authorization errors (HTTP 401/403,
+<code class="docutils literal notranslate"><span class="pre">SignatureDoesNotMatch</span></code>, <code class="docutils literal notranslate"><span class="pre">InvalidAccessKeyId</span></code>, <code class="docutils literal notranslate"><span class="pre">AccessDenied</span></code>);</p></li>
+<li><p>not-found (HTTP 404 — and the beta-8 special case below);</p></li>
+<li><p>conflicts (HTTP 409) and validation errors.</p></li>
+</ul>
+<p>Tune the budget with <code class="docutils literal notranslate"><span class="pre">retries</span></code> (total attempts, default 8) and
+<code class="docutils literal notranslate"><span class="pre">retry_delay</span></code> (seconds, default 3) on any module.</p>
+</section>
+<section id="canonical-comparison">
+<h2>Canonical comparison<a class="headerlink" href="#canonical-comparison" title="Link to this heading"></a></h2>
+<p>The server does not echo state back the way you wrote it. The modules
+compare canonically on both sides so none of this produces false drift:</p>
+<ul class="simple">
+<li><p>IAM policy <code class="docutils literal notranslate"><span class="pre">Action</span></code>/<code class="docutils literal notranslate"><span class="pre">Resource</span></code> arrays return in a different order
+on every read (stored as sets), and the echo injects empty
+boilerplate (a document-level <code class="docutils literal notranslate"><span class="pre">ID</span></code> and per-statement <code class="docutils literal notranslate"><span class="pre">Sid</span></code> /
+<code class="docutils literal notranslate"><span class="pre">Condition</span></code> empties) — write your documents the natural way;</p></li>
+<li><p>lifecycle rule IDs are comparison-irrelevant (rules without an <code class="docutils literal notranslate"><span class="pre">ID</span></code>
+get a deterministic generated one);</p></li>
+<li><p>empty lifecycle scoping (<code class="docutils literal notranslate"><span class="pre">Prefix:</span> <span class="pre">&quot;&quot;</span></code>) is dropped by the server on
+read — a whole-bucket rule stays idempotent either way;</p></li>
+<li><p>lifecycle <code class="docutils literal notranslate"><span class="pre">Date</span></code> fields compare equal across representations
+(<code class="docutils literal notranslate"><span class="pre">2026-01-01</span></code> in your spec vs. the datetime the server returns).</p></li>
+</ul>
+<p>The same canonicalization is exposed as the
+<code class="docutils literal notranslate"><span class="pre">david_igou.rustfs.rustfs_canonical_policy</span></code> and
+<code class="docutils literal notranslate"><span class="pre">david_igou.rustfs.rustfs_canonical_ilm</span></code> filters.</p>
+</section>
+<section id="behaviors-worth-knowing-when-using-the-modules-directly">
+<h2>Behaviors worth knowing when using the modules directly<a class="headerlink" href="#behaviors-worth-knowing-when-using-the-modules-directly" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Policy attachment is a full replace.</strong> The server’s only attachment
+primitive replaces the whole set, and there is no detach endpoint.
+<a class="reference internal" href="../rustfs_policy_attachment_module.html#ansible-collections-david-igou-rustfs-rustfs-policy-attachment-module"><span class="std std-ref">david_igou.rustfs.rustfs_policy_attachment</span></a>
+defaults to the safe union (nothing is ever detached); pass
+<code class="docutils literal notranslate"><span class="pre">exclusive:</span> <span class="pre">true</span></code> to make the set exactly what you list — which is
+how detaching works on this server.</p></li>
+<li><p><strong>Re-adding a user rotates its secret in place.</strong>
+<a class="reference internal" href="../rustfs_user_module.html#ansible-collections-david-igou-rustfs-rustfs-user-module"><span class="std std-ref">david_igou.rustfs.rustfs_user</span></a> therefore never
+re-sends an existing user’s secret unless you opt in with
+<code class="docutils literal notranslate"><span class="pre">update_secret:</span> <span class="pre">true</span></code>.</p></li>
+<li><p><strong>A policy still attached to a user or group cannot be deleted</strong>
+(the server answers HTTP 500) — detach first, then remove.</p></li>
+<li><p><strong>Versioned buckets are undeletable</strong> on beta-8;
+<code class="docutils literal notranslate"><span class="pre">rustfs_bucket</span></code> with <code class="docutils literal notranslate"><span class="pre">state:</span> <span class="pre">absent</span></code> surfaces that as a clear
+error instead of a generic failure.</p></li>
+<li><p><strong>Missing canned policies answer HTTP 500</strong> (“policy does not
+exist”), not 404 — the modules normalize this to not-found, so a
+first converge on a fresh server is clean and fast.</p></li>
+<li><p><strong>Service accounts cannot be updated</strong> (no endpoint exists) — to
+change a policy or expiration, remove and recreate the account.</p></li>
+<li><p><strong>Lifecycle configuration is replaced whole.</strong> There is no per-rule
+editing anywhere in the stack;
+<a class="reference internal" href="../rustfs_bucket_lifecycle_module.html#ansible-collections-david-igou-rustfs-rustfs-bucket-lifecycle-module"><span class="std std-ref">david_igou.rustfs.rustfs_bucket_lifecycle</span></a> treats
+your <code class="docutils literal notranslate"><span class="pre">rules</span></code> list as the entire configuration, and
+<code class="docutils literal notranslate"><span class="pre">state:</span> <span class="pre">absent</span></code> removes the whole configuration.</p></li>
+</ul>
+<p>Scope lifecycle rules with a top-level <code class="docutils literal notranslate"><span class="pre">Prefix</span></code>. A nested
+<code class="docutils literal notranslate"><span class="pre">Filter.Prefix</span></code> round-trips cleanly over the direct S3 API, but
+whether the expiry scanner honours it at execution time is unverified on
+beta-8 — top-level <code class="docutils literal notranslate"><span class="pre">Prefix</span></code> is the proven shape.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          
+
+<footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="drift_detection.html" class="btn btn-neutral float-left" title="Drift detection and reporting" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rustfs_state_role.html" class="btn btn-neutral float-right" title="david_igou.rustfs.rustfs_state role" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright david-igou.rustfs contributors.</p>
+  </div>
+
+  
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script><!-- extra footer elements for Ansible beyond RTD Sphinx Theme -->
+
+</body>
+</html>

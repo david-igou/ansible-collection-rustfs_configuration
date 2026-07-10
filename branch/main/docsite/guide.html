@@ -1,0 +1,344 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Getting started &mdash; David_Igou.Rustfs Collection  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=41de9001" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/ansible.css?v=b54c304f" />
+      <link rel="stylesheet" type="text/css" href="../_static/antsibull-minimal.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/rtd-ethical-ads.css?v=289b023e" />
+
+  
+    <link rel="shortcut icon" href="../_static/images/Ansible-Mark-RGB_Black.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=7f41d439"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Drift detection and reporting" href="drift_detection.html" />
+    <link rel="prev" title="David_Igou.Rustfs" href="../index.html" /><!-- extra head elements for Ansible beyond RTD Sphinx Theme -->
+
+
+
+
+</head>
+
+<body class="wy-body-for-nav"><!-- extra body elements for Ansible beyond RTD Sphinx Theme -->
+
+<div class="DocSite-globalNav ansibleNav">
+  <ul>
+    <li><a href="https://www.ansible.com/blog" target="_blank">Blog</a></li>
+    <li><a href="https://forum.ansible.com/" target="_blank">Ansible community forum</a></li>
+    <li><a href="https://docs.ansible.com/" target="_blank">Documentation</a></li>
+  </ul>
+</div>
+
+<a class="DocSite-nav" href="https://david-igou.github.io/ansible-collection-rustfs_configuration/branch/main/" style="padding-bottom: 30px;">
+
+  <img class="DocSiteNav-logo"
+    src="../_static/images/Ansible-Mark-RGB_White.png"
+    alt="Ansible Logo">
+  <div class="DocSiteNav-title">David_Igou.Rustfs Collection Docs</div>
+</a>
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            David_Igou.Rustfs Collection
+          </a><!--- Based on https://github.com/rtfd/sphinx_rtd_theme/pull/438/files -->
+
+<div class="version">
+  
+    
+  
+</div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <label class="sr-only" for="q">Search docs:</label>
+    <input type="text" class="st-default-search-input" id="q" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+  
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#the-setup">The setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-spec">The spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-the-modules-directly">Using the modules directly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#migrating-from-1-x">Migrating from 1.x</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="drift_detection.html">Drift detection and reporting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="server_behavior.html">Server behavior, errors, and retries</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="rustfs_state_role.html">david_igou.rustfs.rustfs_state role</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_bucket_module.html">david_igou.rustfs.rustfs_bucket module – Manage buckets on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_bucket_info_module.html">david_igou.rustfs.rustfs_bucket_info module – Gather information about buckets on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_bucket_lifecycle_module.html">david_igou.rustfs.rustfs_bucket_lifecycle module – Manage the lifecycle (ILM) configuration of a RustFS bucket</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_bucket_quota_module.html">david_igou.rustfs.rustfs_bucket_quota module – Manage the hard quota of a RustFS bucket</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_credential_info_module.html">david_igou.rustfs.rustfs_credential_info module – Verify a credential pair against a RustFS server (liveness)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_group_module.html">david_igou.rustfs.rustfs_group module – Manage IAM groups on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_group_info_module.html">david_igou.rustfs.rustfs_group_info module – Gather information about IAM groups on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_policy_module.html">david_igou.rustfs.rustfs_policy module – Manage canned IAM policies on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_policy_attachment_module.html">david_igou.rustfs.rustfs_policy_attachment module – Manage the policies attached to a RustFS user or group</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_policy_info_module.html">david_igou.rustfs.rustfs_policy_info module – Gather information about canned IAM policies on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_service_account_module.html">david_igou.rustfs.rustfs_service_account module – Manage service accounts on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_service_account_info_module.html">david_igou.rustfs.rustfs_service_account_info module – Gather information about service accounts on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_user_module.html">david_igou.rustfs.rustfs_user module – Manage IAM users on a RustFS server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_user_info_module.html">david_igou.rustfs.rustfs_user_info module – Gather information about IAM users on a RustFS server</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_canonical_ilm_filter.html">david_igou.rustfs.rustfs_canonical_ilm filter – Canonicalize a RustFS ILM rule list for comparison</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_canonical_policy_filter.html">david_igou.rustfs.rustfs_canonical_policy filter – Canonicalize a RustFS IAM policy document for comparison</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../rustfs_state_role.html">david_igou.rustfs.rustfs_state role – Reconcile one RustFS instance’s in-server state against a declarative spec</a></li>
+</ul>
+<!-- extra nav elements for Ansible beyond RTD Sphinx Theme -->
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">David_Igou.Rustfs Collection</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Getting started</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+
+  
+           <div itemprop="articleBody">
+             
+  <section id="getting-started">
+<span id="ansible-collections-david-igou-rustfs-docsite-guide"></span><h1>Getting started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">david_igou.rustfs</span></code> manages the <strong>in-server state</strong> of
+<a class="reference external" href="https://rustfs.com">RustFS</a> object-storage servers declaratively:
+buckets, versioning, lifecycle (ILM) rules, quotas, IAM policies, users,
+groups, service accounts, policy attachments, and credential liveness
+verification. Everything is done with native modules that speak the two
+management planes directly from Python — the S3 API and the RustFS admin
+REST API (<code class="docutils literal notranslate"><span class="pre">/rustfs/admin/v3/*</span></code>), both authenticated with AWS SigV4. No
+CLI binary is downloaded or shelled out to.</p>
+<p>Server deployment and runtime configuration are deliberately out of
+scope: this collection reconciles what lives <em>inside</em> a running server.</p>
+<p>There are two ways to use the collection, and they compose:</p>
+<ul class="simple">
+<li><p>the <a class="reference internal" href="rustfs_state_role.html#ansible-collections-david-igou-rustfs-docsite-rustfs-state-role"><span class="std std-ref">rustfs_state role</span></a>
+— reconcile one whole instance against a declarative per-host spec,
+with drift detection, liveness checks, and deletion safety;</p></li>
+<li><p>the <code class="docutils literal notranslate"><span class="pre">rustfs_*</span></code> modules — direct, single-resource primitives for
+everything else (including the things the role deliberately never
+does, like deleting).</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The modules require <strong>botocore</strong> on the Python that executes them.
+For the connection-local host pattern below that means the
+controller/execution environment — botocore is preinstalled in most
+EEs that carry <code class="docutils literal notranslate"><span class="pre">amazon.aws</span></code>.</p>
+</div>
+<section id="the-setup">
+<h2>The setup<a class="headerlink" href="#the-setup" title="Link to this heading"></a></h2>
+<p>Install the collection:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ansible-galaxy<span class="w"> </span>collection<span class="w"> </span>install<span class="w"> </span>david_igou.rustfs
+</pre></div>
+</div>
+<p>One inventory host per RustFS instance, as a connection-local stub —
+the play fans out across instances the way Ansible naturally does:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># inventory</span>
+<span class="nt">rustfs_servers</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">hosts</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">rustfs-cold</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">ansible_connection</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
+</pre></div>
+</div>
+</section>
+<section id="the-spec">
+<h2>The spec<a class="headerlink" href="#the-spec" title="Link to this heading"></a></h2>
+<p>The whole desired state of an instance lives in that host’s
+<code class="docutils literal notranslate"><span class="pre">host_vars</span></code>. Credentials arrive <strong>resolved</strong> — the role performs no
+secret lookups; lookup expressions belong here, in the caller’s data:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># host_vars/rustfs-cold.yml</span>
+<span class="nt">rustfs_state_endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://nas.example.net:20292</span>
+<span class="nt">rustfs_state_admin_access_key</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">lookup(&#39;community.general.onepassword&#39;,</span><span class="nv"> </span><span class="s">&#39;rustfs-cold-admin&#39;,</span><span class="nv"> </span><span class="s">field=&#39;username&#39;,</span><span class="nv"> </span><span class="s">vault=&#39;infra&#39;)</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="nt">rustfs_state_admin_secret_key</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">lookup(&#39;community.general.onepassword&#39;,</span><span class="nv"> </span><span class="s">&#39;rustfs-cold-admin&#39;,</span><span class="nv"> </span><span class="s">field=&#39;password&#39;,</span><span class="nv"> </span><span class="s">vault=&#39;infra&#39;)</span><span class="nv"> </span><span class="s">}}&quot;</span>
+
+<span class="c1"># A custom IAM policy. Write the document the natural way — no ID /</span>
+<span class="c1"># Sid / Condition boilerplate; the server injects those empties and</span>
+<span class="c1"># the canonical comparison absorbs them.</span>
+<span class="nt">rustfs_state_policies</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app-rw</span>
+<span class="w">    </span><span class="nt">document</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">Version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2012-10-17&quot;</span>
+<span class="w">      </span><span class="nt">Statement</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">Effect</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Allow</span>
+<span class="w">          </span><span class="nt">Action</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">s3:GetObject</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">s3:PutObject</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">s3:DeleteObject</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">s3:ListBucket</span>
+<span class="w">          </span><span class="nt">Resource</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">arn:aws:s3:::backups</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">arn:aws:s3:::backups/*</span>
+
+<span class="nt">rustfs_state_buckets</span><span class="p">:</span>
+<span class="w">  </span><span class="c1"># Versioned bucket: keep the live object, prune OLD VERSIONS after</span>
+<span class="w">  </span><span class="c1"># 30 days. Lifecycle rules use the standard S3 API shape</span>
+<span class="w">  </span><span class="c1"># (PascalCase); an ID is optional.</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">backups</span>
+<span class="w">    </span><span class="nt">versioning</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">lifecycle</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">Status</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Enabled</span>
+<span class="w">          </span><span class="nt">NoncurrentVersionExpiration</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">NoncurrentDays</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+<span class="w">  </span><span class="c1"># Non-versioned bucket: expire CURRENT objects 14 days after</span>
+<span class="w">  </span><span class="c1"># creation (logs, cluster backups).</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">logs</span>
+<span class="w">    </span><span class="nt">versioning</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">lifecycle</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">Status</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Enabled</span>
+<span class="w">          </span><span class="nt">Expiration</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">Days</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">14</span>
+
+<span class="nt">rustfs_state_users</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">backup-writer</span>
+<span class="w">    </span><span class="nt">policies</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">app-rw</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">secret_key</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">lookup(&#39;community.general.onepassword&#39;,</span><span class="nv"> </span><span class="s">&#39;backup-writer&#39;,</span><span class="nv"> </span><span class="s">field=&#39;password&#39;,</span><span class="nv"> </span><span class="s">vault=&#39;infra&#39;)</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="w">    </span><span class="nt">liveness_bucket</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">backups</span>
+</pre></div>
+</div>
+<p>The playbook is one role include:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Reconcile RustFS instances</span>
+<span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rustfs_servers</span>
+<span class="w">  </span><span class="nt">gather_facts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">roles</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">david_igou.rustfs.rustfs_state</span>
+</pre></div>
+</div>
+<p>Run it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ansible-playbook<span class="w"> </span>site.yml<span class="w">            </span><span class="c1"># converge</span>
+ansible-playbook<span class="w"> </span>site.yml<span class="w"> </span>--check<span class="w">    </span><span class="c1"># drift detection (fails on drift)</span>
+ansible-playbook<span class="w"> </span>site.yml<span class="w"> </span>--check<span class="w"> </span>--diff<span class="w">   </span><span class="c1"># + exact disagreeing fields</span>
+</pre></div>
+</div>
+</section>
+<section id="using-the-modules-directly">
+<h2>Using the modules directly<a class="headerlink" href="#using-the-modules-directly" title="Link to this heading"></a></h2>
+<p>Anything the role does not manage — groups, service accounts, quotas,
+deletions, exclusive attachments — is available as raw modules. Set the
+connection once with the collection’s action group:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">hosts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">localhost</span>
+<span class="w">  </span><span class="nt">gather_facts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">module_defaults</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">group/david_igou.rustfs.rustfs</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://nas.example.net:20292</span>
+<span class="w">      </span><span class="nt">access_key</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">admin_ak</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="w">      </span><span class="nt">secret_key</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">admin_sk</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="w">  </span><span class="nt">tasks</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Scoped service account for velero</span>
+<span class="w">      </span><span class="nt">david_igou.rustfs.rustfs_service_account</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">svc-velero</span>
+<span class="w">        </span><span class="nt">secret</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">svc_secret</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="w">        </span><span class="nt">policy</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">Version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2012-10-17&quot;</span>
+<span class="w">          </span><span class="nt">Statement</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">Effect</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Allow</span>
+<span class="w">              </span><span class="nt">Action</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">s3</span><span class="p p-Indicator">:</span><span class="nv">PutObject</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">s3</span><span class="p p-Indicator">:</span><span class="nv">GetObject</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">s3</span><span class="p p-Indicator">:</span><span class="nv">ListBucket</span><span class="p p-Indicator">]</span>
+<span class="w">              </span><span class="nt">Resource</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">arn</span><span class="p p-Indicator">:</span><span class="nv">aws</span><span class="p p-Indicator">:</span><span class="nv">s3</span><span class="p p-Indicator">:::</span><span class="nv">velero</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">arn</span><span class="p p-Indicator">:</span><span class="nv">aws</span><span class="p p-Indicator">:</span><span class="nv">s3</span><span class="p p-Indicator">:::</span><span class="nv">velero/*</span><span class="p p-Indicator">]</span>
+
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Cap the backups bucket at 500 GiB</span>
+<span class="w">      </span><span class="nt">david_igou.rustfs.rustfs_bucket_quota</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">bucket</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">backups</span>
+<span class="w">        </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500GB</span>
+</pre></div>
+</div>
+<p>Every connection option can also come from environment variables
+(<code class="docutils literal notranslate"><span class="pre">RUSTFS_ENDPOINT</span></code>, <code class="docutils literal notranslate"><span class="pre">RUSTFS_ACCESS_KEY</span></code>, <code class="docutils literal notranslate"><span class="pre">RUSTFS_SECRET_KEY</span></code>, …) —
+useful with the <code class="docutils literal notranslate"><span class="pre">environment</span></code> keyword on a block or play.</p>
+<p>The module reference in this docsite documents every module’s full
+parameter set, return values, and examples — start with
+<a class="reference internal" href="../rustfs_bucket_module.html#ansible-collections-david-igou-rustfs-rustfs-bucket-module"><span class="std std-ref">david_igou.rustfs.rustfs_bucket</span></a>,
+<a class="reference internal" href="../rustfs_policy_module.html#ansible-collections-david-igou-rustfs-rustfs-policy-module"><span class="std std-ref">david_igou.rustfs.rustfs_policy</span></a>,
+<a class="reference internal" href="../rustfs_user_module.html#ansible-collections-david-igou-rustfs-rustfs-user-module"><span class="std std-ref">david_igou.rustfs.rustfs_user</span></a>, and
+<a class="reference internal" href="../rustfs_credential_info_module.html#ansible-collections-david-igou-rustfs-rustfs-credential-info-module"><span class="std std-ref">david_igou.rustfs.rustfs_credential_info</span></a>.</p>
+</section>
+<section id="migrating-from-1-x">
+<h2>Migrating from 1.x<a class="headerlink" href="#migrating-from-1-x" title="Link to this heading"></a></h2>
+<p>2.0.0 renamed the collection (<code class="docutils literal notranslate"><span class="pre">david_igou.rustfs_configuration</span></code> →
+<code class="docutils literal notranslate"><span class="pre">david_igou.rustfs</span></code>) and removed the <code class="docutils literal notranslate"><span class="pre">rc</span></code> CLI dependency. If you are
+coming from 1.x:</p>
+<ul class="simple">
+<li><p>update every FQCN (role, filters) to the new collection name;</p></li>
+<li><p>drop the <code class="docutils literal notranslate"><span class="pre">rustfs_state_rc_*</span></code> pin variables and
+<code class="docutils literal notranslate"><span class="pre">rustfs_state_alias</span></code> from your data — they no longer exist;</p></li>
+<li><p>rewrite <code class="docutils literal notranslate"><span class="pre">lifecycle.rules</span></code> from the rc-export shape (lowercase
+<code class="docutils literal notranslate"><span class="pre">id</span></code>/<code class="docutils literal notranslate"><span class="pre">prefix</span></code>/<code class="docutils literal notranslate"><span class="pre">expiration.days</span></code>) to the standard S3 API shape
+shown above (<code class="docutils literal notranslate"><span class="pre">ID</span></code> is now optional);</p></li>
+<li><p>install botocore where the modules run.</p></li>
+</ul>
+<p>Everything else — report strings, <code class="docutils literal notranslate"><span class="pre">set_stats</span></code> names, gates, the rest
+of the <code class="docutils literal notranslate"><span class="pre">rustfs_state_*</span></code> spec — is unchanged.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          
+
+<footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="David_Igou.Rustfs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="drift_detection.html" class="btn btn-neutral float-right" title="Drift detection and reporting" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright david-igou.rustfs contributors.</p>
+  </div>
+
+  
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script><!-- extra footer elements for Ansible beyond RTD Sphinx Theme -->
+
+</body>
+</html>
