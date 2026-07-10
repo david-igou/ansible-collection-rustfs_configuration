@@ -1,0 +1,25 @@
+---
+# One-shot maintenance workflow: switch the GitHub Pages source to
+# "GitHub Actions" (build_type=workflow). Pushing the orphan gh-pages
+# branch auto-enabled Pages in legacy branch mode, which makes the docs
+# publish job's deploy-pages step fail; local tokens lack Pages admin, so
+# the flip runs here with the workflow token. Safe to delete after one
+# successful dispatch.
+
+name: "Pages mode"
+
+on: # yamllint disable-line rule:truthy
+  workflow_dispatch:
+
+jobs:
+  set-workflow-mode:
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+    steps:
+      - name: Set Pages build_type to workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api -X PUT repos/${{ github.repository }}/pages -f build_type=workflow
+          gh api repos/${{ github.repository }}/pages -q .build_type
