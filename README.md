@@ -64,6 +64,42 @@ environment variables) and are grouped under the
 See [`docs/server-quirks.md`](docs/server-quirks.md) for the empirical
 server-behavior matrix these invariants come from.
 
+## Installing
+
+No Galaxy release or git tag exists yet — consume as a git source tracking
+`main`:
+
+```yaml
+# requirements.yml
+collections:
+  - name: https://github.com/david-igou/ansible-collection-rustfs.git
+    type: git
+    version: main
+```
+
+### Requirements
+
+- ansible-core >= 2.16 (`meta/runtime.yml` floor; developed and CI-tested on 2.21)
+- **botocore** on the python that executes the modules (for
+  connection-local stub hosts: the controller/EE — it is preinstalled in
+  most execution environments that carry amazon.aws)
+- Network reach from the controller/EE to each instance endpoint
+
+### Local test server
+
+Server deployment is out of scope, but kicking the tires takes one
+throwaway container (the exact image the test suite validates against;
+no volume, so state vanishes with it):
+
+```console
+podman run -d --name rustfs -p 127.0.0.1:9000:9000 \
+  -e RUSTFS_ACCESS_KEY=rustfsadmin -e RUSTFS_SECRET_KEY=rustfsadmin123 \
+  docker.io/rustfs/rustfs:1.0.0-beta.8 rustfs
+```
+
+Then point the spec below at it: `rustfs_state_endpoint: http://127.0.0.1:9000`
+with those two values as the admin keys.
+
 ## Quickstart
 
 One inventory host per RustFS instance, as a connection-local stub:
@@ -186,6 +222,22 @@ module_defaults:
     secret_key: "{{ admin_sk }}"
 ```
 
+Three things to know when driving the modules directly:
+
+- **Access control is IAM-style, not S3 bucket policies.** There is no
+  `PutBucketPolicy` equivalent; grant bucket access with a `policy`
+  scoped to the bucket's ARNs and attach it via `policy_attachment`
+  (the Quickstart's `app-rw` pattern).
+- **The `bucket` module's `versioning` takes `enabled` / `suspended`**
+  (the S3 API's state strings) — the booleans in the role spec above are
+  a role-level convenience that does not carry over to copied-out module
+  tasks.
+- **Teardown has server-enforced ordering**: detach a policy from every
+  user/group before deleting it, and empty a bucket before
+  `state: absent` (with any S3 client — the collection has no
+  object-level module). [`docs/server-quirks.md`](docs/server-quirks.md)
+  has the full behavior matrix.
+
 ## Migrating from 1.x
 
 2.0.0 removes the `rc` CLI dependency entirely. Breaking changes:
@@ -237,26 +289,6 @@ list. Two operational notes:
   tasks; the signal is the end-of-role summary. `ANSIBLE_STDOUT_CALLBACK=yaml`
   (or a `community.general.diff_*` callback) keeps that readable across dozens
   of resources.
-
-## Installing
-
-Consume as a git source until a Galaxy release exists:
-
-```yaml
-# requirements.yml
-collections:
-  - name: https://github.com/david-igou/ansible-collection-rustfs.git
-    type: git
-    version: v2.0.0
-```
-
-## Requirements
-
-- ansible-core >= 2.16 (`meta/runtime.yml` floor; developed and CI-tested on 2.21)
-- **botocore** on the python that executes the modules (for
-  connection-local stub hosts: the controller/EE — it is preinstalled in
-  most execution environments that carry amazon.aws)
-- Network reach from the controller/EE to each instance endpoint
 
 ## Development
 
