@@ -195,8 +195,8 @@ the play fans out across instances the way Ansible naturally does:</p>
 secret lookups; lookup expressions belong here, in the caller’s data:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># host_vars/rustfs-cold.yml</span>
 <span class="nt">rustfs_state_endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://nas.example.net:20292</span>
-<span class="nt">rustfs_state_admin_access_key</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">lookup(&#39;community.general.onepassword&#39;,</span><span class="nv"> </span><span class="s">&#39;rustfs-cold-admin&#39;,</span><span class="nv"> </span><span class="s">field=&#39;username&#39;,</span><span class="nv"> </span><span class="s">vault=&#39;infra&#39;)</span><span class="nv"> </span><span class="s">}}&quot;</span>
-<span class="nt">rustfs_state_admin_secret_key</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">lookup(&#39;community.general.onepassword&#39;,</span><span class="nv"> </span><span class="s">&#39;rustfs-cold-admin&#39;,</span><span class="nv"> </span><span class="s">field=&#39;password&#39;,</span><span class="nv"> </span><span class="s">vault=&#39;infra&#39;)</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="nt">rustfs_state_admin_access_key</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">lookup('community.general.onepassword',</span><span class="nv"> </span><span class="s">'rustfs-cold-admin',</span><span class="nv"> </span><span class="s">field='username',</span><span class="nv"> </span><span class="s">vault='infra')</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="nt">rustfs_state_admin_secret_key</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">lookup('community.general.onepassword',</span><span class="nv"> </span><span class="s">'rustfs-cold-admin',</span><span class="nv"> </span><span class="s">field='password',</span><span class="nv"> </span><span class="s">vault='infra')</span><span class="nv"> </span><span class="s">}}"</span>
 
 <span class="c1"># A custom IAM policy. Write the document the natural way — no ID /</span>
 <span class="c1"># Sid / Condition boilerplate; the server injects those empties and</span>
@@ -204,7 +204,7 @@ secret lookups; lookup expressions belong here, in the caller’s data:</p>
 <span class="nt">rustfs_state_policies</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app-rw</span>
 <span class="w">    </span><span class="nt">document</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">Version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2012-10-17&quot;</span>
+<span class="w">      </span><span class="nt">Version</span><span class="p">:</span><span class="w"> </span><span class="s">"2012-10-17"</span>
 <span class="w">      </span><span class="nt">Statement</span><span class="p">:</span>
 <span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">Effect</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Allow</span>
 <span class="w">          </span><span class="nt">Action</span><span class="p">:</span>
@@ -240,7 +240,7 @@ secret lookups; lookup expressions belong here, in the caller’s data:</p>
 <span class="nt">rustfs_state_users</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">backup-writer</span>
 <span class="w">    </span><span class="nt">policies</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">app-rw</span><span class="p p-Indicator">]</span>
-<span class="w">    </span><span class="nt">secret_key</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">lookup(&#39;community.general.onepassword&#39;,</span><span class="nv"> </span><span class="s">&#39;backup-writer&#39;,</span><span class="nv"> </span><span class="s">field=&#39;password&#39;,</span><span class="nv"> </span><span class="s">vault=&#39;infra&#39;)</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="w">    </span><span class="nt">secret_key</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">lookup('community.general.onepassword',</span><span class="nv"> </span><span class="s">'backup-writer',</span><span class="nv"> </span><span class="s">field='password',</span><span class="nv"> </span><span class="s">vault='infra')</span><span class="nv"> </span><span class="s">}}"</span>
 <span class="w">    </span><span class="nt">liveness_bucket</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">backups</span>
 </pre></div>
 </div>
@@ -269,15 +269,15 @@ connection once with the collection’s action group:</p>
 <span class="w">  </span><span class="nt">module_defaults</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">group/david_igou.rustfs.rustfs</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://nas.example.net:20292</span>
-<span class="w">      </span><span class="nt">access_key</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">admin_ak</span><span class="nv"> </span><span class="s">}}&quot;</span>
-<span class="w">      </span><span class="nt">secret_key</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">admin_sk</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="w">      </span><span class="nt">access_key</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">admin_ak</span><span class="nv"> </span><span class="s">}}"</span>
+<span class="w">      </span><span class="nt">secret_key</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">admin_sk</span><span class="nv"> </span><span class="s">}}"</span>
 <span class="w">  </span><span class="nt">tasks</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Scoped service account for velero</span>
 <span class="w">      </span><span class="nt">david_igou.rustfs.service_account</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">svc-velero</span>
-<span class="w">        </span><span class="nt">secret</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">svc_secret</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="w">        </span><span class="nt">secret</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">svc_secret</span><span class="nv"> </span><span class="s">}}"</span>
 <span class="w">        </span><span class="nt">policy</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">Version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2012-10-17&quot;</span>
+<span class="w">          </span><span class="nt">Version</span><span class="p">:</span><span class="w"> </span><span class="s">"2012-10-17"</span>
 <span class="w">          </span><span class="nt">Statement</span><span class="p">:</span>
 <span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">Effect</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Allow</span>
 <span class="w">              </span><span class="nt">Action</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">s3</span><span class="p p-Indicator">:</span><span class="nv">PutObject</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">s3</span><span class="p p-Indicator">:</span><span class="nv">GetObject</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">s3</span><span class="p p-Indicator">:</span><span class="nv">ListBucket</span><span class="p p-Indicator">]</span>

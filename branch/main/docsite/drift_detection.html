@@ -215,12 +215,12 @@ generated from a compact list instead of hand-written:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">_rw_buckets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">quay</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">cnpg-backups</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">velero</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">loki-chunks</span><span class="p p-Indicator">]</span>
 
 <span class="nt">rustfs_state_policies</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
-<span class="w">  </span><span class="no">{{ _rw_buckets | map(&#39;regex_replace&#39;, &#39;^(.*)$&#39;,</span>
-<span class="w">       </span><span class="no">&#39;{&quot;name&quot;: &quot;\1-rw&quot;, &quot;document&quot;: {&quot;Version&quot;: &quot;2012-10-17&quot;, &quot;Statement&quot;:</span>
-<span class="w">        </span><span class="no">[{&quot;Effect&quot;: &quot;Allow&quot;,</span>
-<span class="w">          </span><span class="no">&quot;Action&quot;: [&quot;s3:GetObject&quot;,&quot;s3:PutObject&quot;,&quot;s3:DeleteObject&quot;,&quot;s3:ListBucket&quot;],</span>
-<span class="w">          </span><span class="no">&quot;Resource&quot;: [&quot;arn:aws:s3:::\1&quot;,&quot;arn:aws:s3:::\1/*&quot;]}]}}&#39;)</span>
-<span class="w">     </span><span class="no">| map(&#39;from_json&#39;) | list }}</span>
+<span class="w">  </span><span class="no">{{ _rw_buckets | map('regex_replace', '^(.*)$',</span>
+<span class="w">       </span><span class="no">'{"name": "\1-rw", "document": {"Version": "2012-10-17", "Statement":</span>
+<span class="w">        </span><span class="no">[{"Effect": "Allow",</span>
+<span class="w">          </span><span class="no">"Action": ["s3:GetObject","s3:PutObject","s3:DeleteObject","s3:ListBucket"],</span>
+<span class="w">          </span><span class="no">"Resource": ["arn:aws:s3:::\1","arn:aws:s3:::\1/*"]}]}}')</span>
+<span class="w">     </span><span class="no">| map('from_json') | list }}</span>
 </pre></div>
 </div>
 <p>At scale the signal is the end-of-role summary;
